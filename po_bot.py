@@ -1,5 +1,6 @@
 import base64
 import json
+import os
 import random
 import time
 # import winsound
@@ -114,7 +115,22 @@ def get_quotes(stack, step=1):
         close = values[i + step - 1]
         high = max(values[i:i + step - 1])
         low = min(values[i:i + step - 1])
-        quotes.append(Quote(date=datetime.fromtimestamp(keys[i]), open=open, high=high, low=low, close=close, volume=None))
+        if os.name == 'nt':  # windows
+            quotes.append(Quote(
+                date=datetime.fromtimestamp(keys[i]),
+                open=str(open).replace('.', ','),
+                high=str(high).replace('.', ','),
+                low=str(low).replace('.', ','),
+                close=str(close).replace('.', ','),
+                volume=None))
+        else:
+             quotes.append(Quote(
+                date=datetime.fromtimestamp(keys[i]),
+                open=open,
+                high=high,
+                low=low,
+                close=close,
+                volume=None))
     return quotes
 
 
@@ -136,9 +152,8 @@ def check_indicators(stack):
 
     try:
         if psar[-1].is_reversal:
-            print('PSAR is reversal')
+            print(f'PSAR is reversal, ADX: {int(adx[-1].adx)}')
             if adx[-1].adx > 18:
-                print(f'ADX: {adx[-1].adx}')
                 if psar[-1].sar < last_value:
                     if macd[-1].signal < macd[-1].macd < 0:
                         print(f'Do call by PSAR reversal with MACD')
