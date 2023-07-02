@@ -109,30 +109,6 @@ def do_action(signal):
             print(e)
 
 
-def update_reverse(long, short):
-    global TREND_STACK, REVERSE, REVERSE_DATE, ACTIONS
-    if len(TREND_STACK) < TREND_LENGTH:
-        if short > long:
-            TREND_STACK.append('up')
-        elif short < long:
-            TREND_STACK.append('down')
-        else:  # if equals, append the same last element
-            TREND_STACK.append(TREND_STACK[-1])
-    elif len(TREND_STACK) > TREND_LENGTH:
-        TREND_STACK = []  # refresh
-        print('Refresh trend stack')
-    if len(TREND_STACK) == TREND_LENGTH:
-        if TREND_STACK[0] != TREND_STACK[1]:
-            REVERSE = True
-        else:
-            REVERSE = False
-        if REVERSE:
-            print(f'Reverse to {TREND_STACK[-1]}')
-            REVERSE_DATE = datetime.now()
-            ACTIONS = []  # refresh ACTIONS during reverse # TODO: check this
-        TREND_STACK = TREND_STACK[1:]
-
-
 def get_quotes(stack, step=1):
     if len(stack) // 100 == len(stack) / 100 and len(stack) < LENGTH_STACK_MAX:
         print(len(stack))
@@ -161,34 +137,26 @@ def check_indicators(stack):
     psar = indicators.get_parabolic_sar(quotes)
     macd = indicators.get_macd(quotes, fast_periods=12, slow_periods=26, signal_periods=9)
     adx = indicators.get_adx(quotes)
-    rsi = indicators.get_rsi(quotes)
+    # rsi = indicators.get_rsi(quotes)
 
     try:
-        # print(psar[-1].sar < last_value)
         if psar[-1].is_reversal:
             print('PSAR is reversal')
             if adx[-1].adx > 18:
-                print(f'ADX: {adx[-1].adx}, RSI: {rsi[-1].rsi}')
-                if psar[-1].sar < last_value:
-                    print('Do call by PSAR reversal')
-                    if macd[-1].signal < macd[-1].macd < 0:
-                        print('Do call by PSAR reversal with MACD')
-                        # if rsi[-1].rsi < 50:
-                        # print('Do call by PSAR reversal with RSI < 50')
-                        do_action('call')
-                if psar[-1].sar > last_value:
-                    print('Do put by PSAR reversal')
-                    if macd[-1].signal > macd[-1].macd > 0:
-                        print('Do put by PSAR reversal with MACD')
-                        # if rsi[-1].rsi > 50:
-                        # print('Do call by PSAR reversal with RSI > 50')
-                        do_action('put')
+                print(f'ADX: {adx[-1].adx}')
+                if macd[-1].signal < macd[-1].macd < 0:
+                    print(f'Do call by PSAR reversal with MACD')
+                    do_action('call')
+                elif macd[-1].signal > macd[-1].macd > 0:
+                    print(f'Do put by PSAR reversal with MACD')
+                    do_action('put')
     except Exception as e:
         print(e)
 
 
 def check_closed_trades():
     try:
+        # driver.find_elements(by=By.CLASS_NAME, value='flex-centered')[-1].click()
         closed_trades = driver.find_elements(by=By.CLASS_NAME, value='centered')
         closed_trades_currencies = driver.find_elements(by=By.CLASS_NAME, value='deals-list__item')
         if len(closed_trades) >= CLOSED_TRADES_LENGTH:
