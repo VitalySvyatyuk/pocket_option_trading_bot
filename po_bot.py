@@ -14,9 +14,7 @@ from stock_indicators.indicators.common.quote import Quote
 
 LENGTH_STACK_MIN = 450
 LENGTH_STACK_MAX = 1800
-POWER_STACK = 30  # power of the last candle or growing movement
 PERIOD = 15  # PERIOD on the graph
-STEP = PERIOD * 2  # seconds !!!DEPRECATED
 STACK = {}  # {1687021970: 0.87, 1687021971: 0.88}
 ACTIONS = []  # list of {datetime: value} when an action has been made
 MAX_ACTIONS = 1
@@ -31,14 +29,7 @@ SMA_SHORT = 4
 SMMA_SHORT = 10
 CCI_PERIOD = 20
 CCI = 100
-TREND_STACK = []  # ["up", "down"]
-TREND_LENGTH = 2
-REVERSE = False
-REVERSE_DATE = None
-REVERSE_BARS = 5
-# VICE_VERSA = False
 CLOSED_TRADES_LENGTH = 2
-#TODO: implement DEMO
 
 options = Options()
 options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
@@ -123,7 +114,7 @@ def get_quotes(stack, step=1):
         close = values[i + step - 1]
         high = max(values[i:i + step - 1])
         low = min(values[i:i + step - 1])
-        quotes.append(Quote(date=datetime.fromtimestamp(keys[i]), open=str(open).replace('.', ','), high=str(high).replace('.', ','), low=str(low).replace('.', ','), close=str(close).replace('.', ','), volume=None))
+        quotes.append(Quote(date=datetime.fromtimestamp(keys[i]), open=open, high=high, low=low, close=close, volume=None))
     return quotes
 
 
@@ -135,28 +126,37 @@ def check_indicators(stack):
     # smma_short = indicators.get_smma(quotes, lookback_periods=SMMA_SHORT)
     # cci_results = indicators.get_cci(quotes, CCI_PERIOD)
     psar = indicators.get_parabolic_sar(quotes)
-    macd = indicators.get_macd(quotes, fast_periods=12, slow_periods=26, signal_periods=9)
+    macd = indicators.get_macd(quotes)
     adx = indicators.get_adx(quotes)
     # rsi = indicators.get_rsi(quotes)
+
+    if macd[-1].macd > 1 or macd[-1].macd < -1:
+        print('Inadequate MACD, pass')
+        return
 
     try:
         if psar[-1].is_reversal:
             print('PSAR is reversal')
             if adx[-1].adx > 18:
                 print(f'ADX: {adx[-1].adx}')
-                if macd[-1].signal < macd[-1].macd < 0:
-                    print(f'Do call by PSAR reversal with MACD')
-                    do_action('call')
-                elif macd[-1].signal > macd[-1].macd > 0:
-                    print(f'Do put by PSAR reversal with MACD')
-                    do_action('put')
+                if psar[-1].sar < last_value:
+                    if macd[-1].signal < macd[-1].macd < 0:
+                        print(f'Do call by PSAR reversal with MACD')
+                        do_action('call')
+                elif psar[-1].sar > last_value:
+                    if macd[-1].signal > macd[-1].macd > 0:
+                        print(f'Do put by PSAR reversal with MACD')
+                        do_action('put')
     except Exception as e:
         print(e)
 
 
 def check_closed_trades():
     try:
-        # driver.find_elements(by=By.CLASS_NAME, value='flex-centered')[-1].click()
+        closed_tab = driver.find_element(by=By.CSS_SELECTOR, value='#bar-chart > div > div > div.right-widget-container > div > div.widget-slot__header > div.divider > ul > li:nth-child(2) > a')
+        closed_tab_parent = closed_tab.find_element(by=By.XPATH, value='..')
+        if closed_tab_parent.get_attribute('class') == '':
+            closed_tab_parent.click()
         closed_trades = driver.find_elements(by=By.CLASS_NAME, value='centered')
         closed_trades_currencies = driver.find_elements(by=By.CLASS_NAME, value='deals-list__item')
         if len(closed_trades) >= CLOSED_TRADES_LENGTH:
@@ -182,7 +182,7 @@ def WebSocketLog(stack):
     except:
         pass
 
-    global CURRENCY, CURRENCY_CHANGE, CURRENCY_CHANGE_DATE, LAST_REFRESH, TREND_STACK, REVERSE, REVERSE_DATE, HISTORY_TAKEN
+    global CURRENCY, CURRENCY_CHANGE, CURRENCY_CHANGE_DATE, LAST_REFRESH, HISTORY_TAKEN
     try:
         current_symbol = driver.find_element(by=By.CLASS_NAME, value='current-symbol').text
         if current_symbol != CURRENCY:
@@ -195,9 +195,6 @@ def WebSocketLog(stack):
 
     if CURRENCY_CHANGE and CURRENCY_CHANGE_DATE < datetime.now() - timedelta(seconds=5):
         stack = {}  # drop stack when currency changed
-        TREND_STACK = []
-        REVERSE = False
-        REVERSE_DATE = None
         HISTORY_TAKEN = False  # take history again
         driver.refresh()  # refresh page to cut off unwanted signals
         CURRENCY_CHANGE = False
