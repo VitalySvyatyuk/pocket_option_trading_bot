@@ -14,7 +14,7 @@ from stock_indicators import indicators
 from stock_indicators.indicators.common.quote import Quote
 
 LENGTH_STACK_MIN = 450
-LENGTH_STACK_MAX = 1800
+LENGTH_STACK_MAX = 18000
 PERIOD = 15  # PERIOD on the graph
 STACK = {}  # {1687021970: 0.87, 1687021971: 0.88}
 ACTIONS = []  # list of {datetime: value} when an action has been made
@@ -221,17 +221,24 @@ def WebSocketLog(stack):
         if response.get('opcode', 0) == 2 and not CURRENCY_CHANGE:
             payload_str = base64.b64decode(response['payloadData']).decode('utf-8')
             data = json.loads(payload_str)
-            if not HISTORY_TAKEN and 'history' in data:
-                HISTORY_TAKEN = True
-                stack = {int(d[0]): d[1] for d in data['history']}
-                print(f"History taken for asset: {data['asset']}, period: {data['period']}, len_history: {len(data['history'])}, len_stack: {len(stack)}")
+            if not HISTORY_TAKEN:
+                if 'asset' in data and 'data' in data:
+                    HISTORY_TAKEN = True
+                    stack = {int(d['time']): d['price'] for d in data['data']}
+                    print(f"History taken for asset: {data['asset']}, period: {data['period']}, len_history: {len(data['data'])}, len_stack: {len(stack)}")
+                # if 'history' in data:
+                #     stack = {int(d[0]): d[1] for d in data['history']}
+                #     print(f"History taken for asset: {data['asset']}, period: {data['period']}, len_history: {len(data['history'])}, len_stack: {len(stack)}")
             try:
                 current_symbol = driver.find_element(by=By.CLASS_NAME, value='current-symbol').text
                 symbol, timestamp, value = data[0]
             except:
                 continue
-            if current_symbol.replace('/', '').replace(' ', '') != symbol.replace('_', '').upper() and companies.get(current_symbol) != symbol:
-                continue
+            try:
+                if current_symbol.replace('/', '').replace(' ', '') != symbol.replace('_', '').upper() and companies.get(current_symbol) != symbol:
+                    continue
+            except:
+                pass
 
             if len(stack) == LENGTH_STACK_MAX:
                 first_element = next(iter(stack))
