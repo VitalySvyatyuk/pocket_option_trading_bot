@@ -1,25 +1,31 @@
 import base64
+import csv
 import json
 import os
 import random
 import time
 # import winsound
-
 from datetime import datetime, timedelta
 from decimal import Decimal
+
+import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 from stock_indicators import indicators
 from stock_indicators.indicators.common.quote import Quote
 
-LENGTH_STACK_MIN = 450
-LENGTH_STACK_MAX = 18000
+LENGTH_STACK_MIN = 1300
+LENGTH_STACK_MAX = 4500  # 1 hour
 PERIOD = 15  # PERIOD on the graph
 STACK = {}  # {1687021970: 0.87, 1687021971: 0.88}
 ACTIONS = []  # list of {datetime: value} when an action has been made
 MAX_ACTIONS = 1
-ACTIONS_SECONDS = 20  # how long action still in ACTIONS
+ACTIONS_SECONDS = 15  # how long action still in ACTIONS
 LAST_REFRESH = datetime.now()
 CURRENCY = None
 CURRENCY_CHANGE = False
@@ -30,7 +36,15 @@ SMA_SHORT = 4
 SMMA_SHORT = 10
 CCI_PERIOD = 20
 CCI = 100
-CLOSED_TRADES_LENGTH = 2
+CLOSED_TRADES_LENGTH = 3
+HEADER = [
+    'val1200', 'val1140', 'val1080', 'val1020', 'val960', 'val900', 'val840', 'val780', 'val720', 'val660',
+    'val600', 'val540', 'val480', 'val420', 'val360', 'val300', 'val240', 'val180', 'val120', 'val60',
+    'val', 'profit',
+]
+MODEL = {}  # {model: datetime}
+PREVIOUS = 1200
+STEP = 60
 
 options = Options()
 options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
@@ -66,16 +80,19 @@ def LoadWebDriver():
 
 
 def change_currency():
-    driver.find_element(by=By.CLASS_NAME, value='current-symbol').click()
-    time.sleep(random.random())  # 0-1 sec
+    current_symbol = driver.find_element(by=By.CLASS_NAME, value='current-symbol')
+    current_symbol.click()
+    # time.sleep(random.random())  # 0-1 sec
     currencies = driver.find_elements(By.XPATH, "//li[contains(., '92%')]")
     if currencies:
         # click random currency
         currency = random.choice(currencies)
         # print('Currencies with profit 92%:', len(currencies))
         currency.click()
+        current_symbol.click()  # close assets window
     else:
-        time.sleep(2)
+        pass
+        # time.sleep(2)
 
 
 def do_action(signal):
@@ -99,6 +116,31 @@ def do_action(signal):
             ACTIONS.append(datetime.now())
         except Exception as e:
             print(e)
+
+
+def gather_statistics(value, action, adx, cci, rsi, macd, psar, mass):
+    with open(f'stats/{CURRENCY.replace("/", "")}.csv', 'a+') as csv_file:
+        csv_writer = csv.writer(csv_file, delimiter=',')
+        csv_writer.writerow(
+            [
+                CURRENCY,
+                datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                value,
+                action,
+                adx.adx,
+                adx.adxr,
+                adx.pdi,
+                adx.mdi,
+                cci.cci,
+                rsi.rsi,
+                macd.macd,
+                macd.signal,
+                psar.sar,
+                psar.is_reversal,
+                mass,
+                '',
+            ]
+        )
 
 
 def get_quotes(stack, step=1):
@@ -134,36 +176,142 @@ def get_quotes(stack, step=1):
     return quotes
 
 
+def get_data(stack):
+    values = list(stack.values())
+    data = []
+    for i in range(PREVIOUS, len(values) + 1, 1):
+        try:
+            row = []
+            for j in range(0, PREVIOUS + STEP, STEP):
+                row.append(values[i - j])
+            row.reverse()
+            row.append(1 if values[i] >= values[i + STEP] else 0)
+            data.append(row)
+        except:
+            pass
+    return data
+
+
+def get_last_row(stack):
+    values = list(stack.values())
+    row = []
+    for j in range(0, PREVIOUS + STEP, STEP):
+        row.append(values[- j - 1])
+    row.reverse()
+    return row
+
+
 def check_indicators(stack):
-    quotes = get_quotes(stack, PERIOD)
-    last_value = list(stack.values())[-1]
+    data = get_data(stack)
+    df = pd.DataFrame(data, columns=HEADER)
+
+    X = df.iloc[:, :21]
+    y = df['profit']
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+    model = LogisticRegression(max_iter=10000)
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    model_accuracy = accuracy_score(y_test, y_pred)
+    print(f'Accuracy: {round(model_accuracy, 2)}, len_stack: {len(stack)}')
+
+    df2 = pd.DataFrame([get_last_row(stack), ], columns=HEADER[:-1])
+    y_pred = model.predict(df2)
+
+    if y_pred[-1] == 0:
+        print(f'Do call by prediction')
+        do_action('call')
+    else:
+        print(f'Do put by prediction')
+        do_action('put')
+
+    # quotes = get_quotes(stack, PERIOD)
+    # last_value = list(stack.values())[-1]
     # sma_long = indicators.get_sma(quotes, lookback_periods=SMA_LONG)
     # sma_short = indicators.get_sma(quotes, lookback_periods=SMA_SHORT)
     # smma_short = indicators.get_smma(quotes, lookback_periods=SMMA_SHORT)
-    # cci_results = indicators.get_cci(quotes, CCI_PERIOD)
-    psar = indicators.get_parabolic_sar(quotes)
-    macd = indicators.get_macd(quotes)
-    adx = indicators.get_adx(quotes)
+    # cci = indicators.get_cci(quotes, CCI_PERIOD)
+    # psar = indicators.get_parabolic_sar(quotes)
+    # macd = indicators.get_macd(quotes)
+    # adx = indicators.get_adx(quotes)
     # rsi = indicators.get_rsi(quotes)
+    # bbands = indicators.get_bollinger_bands(quotes)
 
-    if macd[-1].macd > 1 or macd[-1].macd < -1:
-        print('Inadequate MACD, pass')
-        return
+    # PREDICT
 
-    try:
-        if psar[-1].is_reversal:
-            print(f'PSAR is reversal, ADX: {int(adx[-1].adx)}')
-            if adx[-1].adx > 18:
-                if psar[-1].sar < last_value:
-                    if macd[-1].signal < macd[-1].macd < 0:
-                        print(f'Do call by PSAR reversal with MACD')
-                        do_action('call')
-                elif psar[-1].sar > last_value:
-                    if macd[-1].signal > macd[-1].macd > 0:
-                        print(f'Do put by PSAR reversal with MACD')
-                        do_action('put')
-    except Exception as e:
-        print(e)
+    # scaler = StandardScaler()
+    # df = pd.DataFrame([get_data(),])
+    # scaled_data = df  # scaler.fit_transform(df)
+    # df = pd.DataFrame([get_data(),], columns=header[:-1])
+    # y_pred = MODEL.predict(df)
+
+    # ### MASS
+    # try:
+    #     start = driver.find_element(by=By.CLASS_NAME, value='start').text
+    #     start = int(start.replace('%', ''))
+    # except:
+    #     return
+    # if start > 97:
+    #     print(f'Do call by MASS and {100 - start}% agree with me')
+    #     do_action('call')
+    # elif start < 3:
+    #     print(f'Do put by MASS and {start}% agree with me')
+    #     do_action('put')
+    # return
+    # ### MASS END
+
+    ### GATHER STATISTICS
+    # action = 'put'  # random.choice(['call', 'put'])
+    # do_action(action)
+    # mass = start if action == 'put' else 100 - start
+    # gather_statistics(last_value, action, adx[-1], cci[-1], rsi[-1], macd[-1], psar[-1], mass)
+
+    # try:
+    #     print(f'ADX: {adx[-1].adx}')
+    #     if last_value < bbands[-1].lower_band:
+    #         if adx[-1].mdi < 27:
+    #             print(f'Do call BBands')
+    #             do_action('call')
+    #         else:
+    #             print(f'Do put BBands > 27')
+    #             do_action('put')
+    #     elif last_value > bbands[-1].upper_band:
+    #         if adx[-1].pdi < 27:
+    #             print(f'Do put BBands')
+    #             do_action('put')
+    #         else:
+    #             print(f'Do call BBands < 27')
+    #             do_action('call')
+    # except Exception as e:
+    #     print(e)
+
+    # try:
+    #     # if macd[-1].macd > 1 or macd[-1].macd < -1:
+    #     #     print('Inadequate MACD, pass')
+    #     #     return
+    #     if psar[-1].is_reversal:
+    #         # if adx[-1].pdi > 30 and adx[-1].pdi > adx[-1].mdi:
+    #         #     print(f'Do call by PSAR reversal with adx.pdi: {adx[-1].pdi}')
+    #         #     do_action('call')
+    #         # elif adx[-1].mdi > 30 and adx[-1].mdi > adx[-1].pdi:
+    #         #     print(f'Do put by PSAR reversal with adx.mdi: {adx[-1].mdi}')
+    #         #     do_action('put')
+    #         # if adx[-1].pdi > adx[-2].pdi and adx[-1].mdi < adx[-2].mdi:
+    #         #     print(f'Do call by PSAR reversal with PDI > MDI')
+    #         #     do_action('call')
+    #         # elif adx[-1].mdi > adx[-2].mdi and adx[-1].pdi < adx[-2].pdi:
+    #         #     print(f'Do put by PSAR reversal with MDI > PDI')
+    #         #     do_action('put')
+    #         if psar[-1].sar < last_value:
+    #             print(f'Do call by PSAR reversal with adx: {adx[-1].adx}')
+    #             do_action('call')
+    #         elif psar[-1].sar > last_value:
+    #             print(f'Do put by PSAR reversal with adx: {adx[-1].adx}')
+    #             do_action('put')
+    #
+    # except Exception as e:
+    #     print(e)
 
 
 def check_closed_trades():
@@ -192,8 +340,9 @@ def WebSocketLog(stack):
         estimated_profit = driver.find_element(by=By.CLASS_NAME, value='estimated-profit-block__text').text
         if estimated_profit != '+92%':
             # print('The profit is less than 92% -> switching to another currency')
-            time.sleep(random.random() * 10)  # 1-10 sec
-            change_currency()
+            # time.sleep(random.random() * 10)  # 1-10 sec
+            # change_currency()  # TODO: enable it
+            pass
     except:
         pass
 
@@ -252,9 +401,10 @@ def WebSocketLog(stack):
                 print(f"Len > {LENGTH_STACK_MAX}!!")
                 stack = {}  # refresh then
             if len(stack) >= LENGTH_STACK_MIN:
-                check_closed_trades()
+                # check_closed_trades()  # TODO: enable it
                 check_indicators(stack)
     return stack
+
 
 LoadWebDriver()
 while True:

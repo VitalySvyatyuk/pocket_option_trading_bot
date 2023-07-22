@@ -1,2 +1,4 @@
+pandas==1.5.3
+scikit-learn==1.2.1
 selenium==4.10.0
 stock-indicators==1.0.1
