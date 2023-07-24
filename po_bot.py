@@ -8,13 +8,13 @@ import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
 
 
 LENGTH_STACK_MIN = 1300
-LENGTH_STACK_MAX = 4000  # 1 hour
+LENGTH_STACK_MAX = 5000  # 1 hour
 PERIOD = 15  # PERIOD on the graph
 STACK = {}  # {1687021970: 0.87, 1687021971: 0.88}
 ACTIONS = []  # list of {datetime: value} when an action has been made
@@ -140,7 +140,7 @@ def check_prediction(stack):
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-    model = LogisticRegression(max_iter=10000)
+    model = DecisionTreeClassifier()
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
     model_accuracy = accuracy_score(y_test, y_pred)  # get accuracy
