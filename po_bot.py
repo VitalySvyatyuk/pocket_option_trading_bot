@@ -14,12 +14,12 @@ from stock_indicators import indicators
 from stock_indicators.indicators.common.quote import Quote
 
 LENGTH_STACK_MIN = 450
-LENGTH_STACK_MAX = 18000
+LENGTH_STACK_MAX = 5000
 PERIOD = 15  # PERIOD on the graph
 STACK = {}  # {1687021970: 0.87, 1687021971: 0.88}
 ACTIONS = []  # list of {datetime: value} when an action has been made
 MAX_ACTIONS = 1
-ACTIONS_SECONDS = 20  # how long action still in ACTIONS
+ACTIONS_SECONDS = 10  # how long action still in ACTIONS
 LAST_REFRESH = datetime.now()
 CURRENCY = None
 CURRENCY_CHANGE = False
@@ -31,6 +31,10 @@ SMMA_SHORT = 10
 CCI_PERIOD = 20
 CCI = 100
 CLOSED_TRADES_LENGTH = 2
+TREND_LENGTH = 15
+TREND_STACK = []
+TREND = 'unknown'  # up, down
+TREND_INIT_CHANGE = True
 
 options = Options()
 options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
@@ -134,34 +138,72 @@ def get_quotes(stack, step=1):
     return quotes
 
 
+def get_trend(supertrend):
+    global TREND_STACK, TREND
+    if len(TREND_STACK) < TREND_LENGTH:
+        if supertrend[-1].upper_band is None:
+            TREND_STACK.append('up')
+        else:
+            TREND_STACK.append('down')
+    if len(TREND_STACK) == TREND_LENGTH:
+        if TREND_STACK.count(TREND_STACK[0]) == len(TREND_STACK):
+            TREND = TREND_STACK[0]  # ether up or down
+        else:
+            TREND = 'unknown'  # up, down
+        del TREND_STACK[0]
+    elif len(TREND_STACK) > TREND_LENGTH:
+        TREND_STACK = []  # refresh
+
+
 def check_indicators(stack):
+    global TREND_INIT_CHANGE
     quotes = get_quotes(stack, PERIOD)
     last_value = list(stack.values())[-1]
     # sma_long = indicators.get_sma(quotes, lookback_periods=SMA_LONG)
     # sma_short = indicators.get_sma(quotes, lookback_periods=SMA_SHORT)
     # smma_short = indicators.get_smma(quotes, lookback_periods=SMMA_SHORT)
     # cci_results = indicators.get_cci(quotes, CCI_PERIOD)
-    psar = indicators.get_parabolic_sar(quotes)
-    macd = indicators.get_macd(quotes)
-    adx = indicators.get_adx(quotes)
+    # psar = indicators.get_parabolic_sar(quotes)
+    # macd = indicators.get_macd(quotes, fast_periods=12, slow_periods=26, signal_periods=9)
+    # adx = indicators.get_adx(quotes)
     # rsi = indicators.get_rsi(quotes)
+    supertrend = indicators.get_super_trend(quotes)
+    trend_before = TREND
+    # print(f'Trend before: {trend_before}')
+    get_trend(supertrend)
+    trend_after = TREND
+    print(TREND_STACK)
+    # print(f'Trend after: {trend_after}')
 
-    if macd[-1].macd > 1 or macd[-1].macd < -1:
-        print('Inadequate MACD, pass')
-        return
+    # trend is strong and rsi between 70 and 50 for call
+    # rsi 50-30 with down - do put
 
+    # trend is strong and rsi > 30 for call
+
+    # also call rsi between 70 and 50 for strong up trend
+
+    # if macd[-1].macd > 1 or macd[-1].macd < -1:
+    #     print('Inadequate MACD, pass')
+    #     return
+    # print(f'trend: {"up" if supertrend[-1].lower_band else "down"}')
     try:
-        if psar[-1].is_reversal:
-            print(f'PSAR is reversal, ADX: {int(adx[-1].adx)}')
-            if adx[-1].adx > 18:
-                if psar[-1].sar < last_value:
-                    if macd[-1].signal < macd[-1].macd < 0:
-                        print(f'Do call by PSAR reversal with MACD')
-                        do_action('call')
-                elif psar[-1].sar > last_value:
-                    if macd[-1].signal > macd[-1].macd > 0:
-                        print(f'Do put by PSAR reversal with MACD')
-                        do_action('put')
+        # if trend_before != trend_after:
+        #     if TREND_INIT_CHANGE:  # pass init trend change
+        #         TREND_INIT_CHANGE = False
+        #         return
+        #     print(f'Trend is changed to {TREND}')
+        #     if trend_after == 'up':
+        #         print(f'Do call by supertrend')
+        #         do_action('call')
+        #     elif trend_after == 'down':
+        #         print(f'Do put by supertrend')
+        #         do_action('put')
+        if last_value < list(stack.values())[-15]:
+            print(f'Do call by supertrend')
+            do_action('call')
+        else:
+            print(f'Do put by supertrend')
+            do_action('put')
     except Exception as e:
         print(e)
 
@@ -182,22 +224,23 @@ def check_closed_trades():
                         minus_trades += 1
             if minus_trades == CLOSED_TRADES_LENGTH:
                 # winsound.Beep(880, 100)
-                change_currency()
+                # change_currency()
+                pass
     except Exception as e:
         pass
 
 
 def WebSocketLog(stack):
-    try:
-        estimated_profit = driver.find_element(by=By.CLASS_NAME, value='estimated-profit-block__text').text
-        if estimated_profit != '+92%':
-            # print('The profit is less than 92% -> switching to another currency')
-            time.sleep(random.random() * 10)  # 1-10 sec
-            change_currency()
-    except:
-        pass
+    # try:
+    #     estimated_profit = driver.find_element(by=By.CLASS_NAME, value='estimated-profit-block__text').text
+    #     if estimated_profit != '+92%':
+    #         # print('The profit is less than 92% -> switching to another currency')
+    #         time.sleep(random.random() * 10)  # 1-10 sec
+    #         change_currency()
+    # except:
+    #     pass
 
-    global CURRENCY, CURRENCY_CHANGE, CURRENCY_CHANGE_DATE, LAST_REFRESH, HISTORY_TAKEN
+    global CURRENCY, CURRENCY_CHANGE, CURRENCY_CHANGE_DATE, LAST_REFRESH, HISTORY_TAKEN, TREND_STACK
     try:
         current_symbol = driver.find_element(by=By.CLASS_NAME, value='current-symbol').text
         if current_symbol != CURRENCY:
@@ -213,6 +256,7 @@ def WebSocketLog(stack):
         HISTORY_TAKEN = False  # take history again
         driver.refresh()  # refresh page to cut off unwanted signals
         CURRENCY_CHANGE = False
+        TREND_STACK = []
         # print('currency_change is False')
 
     for wsData in driver.get_log('performance'):
