@@ -1,25 +1,27 @@
 import base64
 import json
 import random
+import time
 from datetime import datetime, timedelta
-from decimal import Decimal
 
-import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier
 
 
-LENGTH_STACK_MIN = 1300
-LENGTH_STACK_MAX = 5000  # 1 hour
-PERIOD = 15  # PERIOD on the graph
+BASE_URL = 'https://pocketoption.com'  # change if PO is blocked in your country
+LENGTH_STACK_MIN = 460
+LENGTH_STACK_MAX = 1000  # 4000
+PERIOD = 5  # PERIOD on the graph
+TIME = 1  # quotes
+SMA_LONG = 50
+SMA_SHORT = 8
+PERCENTAGE = 0.91  # create orders more than PERCENTAGE
 STACK = {}  # {1687021970: 0.87, 1687021971: 0.88}
-ACTIONS = []  # list of {datetime: value} when an action has been made
+ACTIONS = {}  # dict of {datetime: value} when an action has been made
 MAX_ACTIONS = 1
-ACTIONS_SECONDS = 15  # how long action still in ACTIONS
+ACTIONS_SECONDS = PERIOD - 1  # how long action still in ACTIONS
 LAST_REFRESH = datetime.now()
 CURRENCY = None
 CURRENCY_CHANGE = False
@@ -27,18 +29,61 @@ CURRENCY_CHANGE_DATE = datetime.now()
 HISTORY_TAKEN = False  # becomes True when history is taken. History length is 900-1800
 CLOSED_TRADES_LENGTH = 3
 HEADER = [
-    'val1200', 'val1140', 'val1080', 'val1020', 'val960', 'val900', 'val840', 'val780', 'val720', 'val660',
-    'val600', 'val540', 'val480', 'val420', 'val360', 'val300', 'val240', 'val180', 'val120', 'val60',
-    'val', 'profit',
+    # '00',
+    # '01', '02', '03', '04', '05', '06', '07', '08', '09', '10',
+    # '11', '12', '13', '14', '15', '16', '17', '18', '19', '20',
+    # '21', '22', '23', '24', '25', '26', '27', '28', '29', '30',
+    # '31', '32', '33', '34', '35', '36', '37', '38', '39', '40',
+    # '41', '42', '43', '44', '45', '46', '47', '48', '49', '50',
+    'adx',
+    'pdi',
+    'mdi',
+    'rsi',
+    'trend',
+    'psar',
+    'aroon_up',
+    'aroon_down',
+    'oscillator',
+    'vortex_pvi',
+    'vortex_nvi',
+    'stoch_rsi',
+    'stoch_signal',
+    'macd',
+    'macd_signal',
+    'profit',
 ]
-MODEL = {}  # {model: datetime}
+MODEL = None
+SCALER = None
 PREVIOUS = 1200
-STEP = 60
+MAX_DEPOSIT = 0
+MIN_DEPOSIT = 0
+INIT_DEPOSIT = None
+NUMBERS = {
+    '0': '11',
+    '1': '7',
+    '2': '8',
+    '3': '9',
+    '4': '4',
+    '5': '5',
+    '6': '6',
+    '7': '1',
+    '8': '2',
+    '9': '3',
+}
+IS_AMOUNT_SET = True
+AMOUNTS = []  # 1, 3, 8, 18, 39, 82, 172
+EARNINGS = 15  # euros.
+MARTINGALE_COEFFICIENT = 2.0  # everything < 2 have worse profitability
 
 options = Options()
 options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
-driver = webdriver.Chrome(options=options)
-
+options.add_argument('--ignore-ssl-errors')
+options.add_argument('--ignore-certificate-errors')
+options.add_argument('--ignore-certificate-errors-spki-list')
+options.add_argument(r'--user-data-dir=/Users/vitaly/Library/Application Support/Google/Chrome/Default')
+# chromedriver can be downloaded from here: https://googlechromelabs.github.io/chrome-for-testing/
+service = Service(executable_path=r'/Users/vitaly/Downloads/chromedriver-mac-arm64/chromedriver')
+driver = webdriver.Chrome(options=options, service=service)
 companies = {
     'Apple OTC': '#AAPL_otc',
     'American Express OTC': '#AXP_otc',
@@ -63,9 +108,8 @@ companies = {
 
 
 def load_web_driver():
-    # TODO: make currency changing smoother
-    base_url = "https://pocketoption.com/en/cabinet/demo-quick-high-low/"  # Change the site
-    driver.get(base_url)
+    url = f'{BASE_URL}/en/cabinet/demo-quick-high-low/'
+    driver.get(url)
 
 
 def change_currency():
@@ -75,22 +119,26 @@ def change_currency():
     currencies = driver.find_elements(By.XPATH, "//li[contains(., '92%')]")
     if currencies:
         # click random currency
-        currency = random.choice(currencies)
-        # print('Currencies with profit 92%:', len(currencies))
+        while True:
+            currency = random.choice(currencies)
+            if CURRENCY not in currency.text:
+                break  # avoid repeats
         currency.click()
-        current_symbol.click()  # close assets window
     else:
         pass
-        # time.sleep(2)
 
 
 def do_action(signal):
     action = True
-    # update ACTIONS:
-    global ACTIONS
-    for ACTION in ACTIONS:
-        if ACTION < datetime.now() - timedelta(seconds=ACTIONS_SECONDS):
-            ACTIONS.remove(ACTION)
+    try:
+        last_value = list(STACK.values())[-1]
+    except:
+        return
+
+    global ACTIONS, IS_AMOUNT_SET
+    for dat in list(ACTIONS.keys()):
+        if dat < datetime.now() - timedelta(seconds=ACTIONS_SECONDS):
+            del ACTIONS[dat]
 
     if action:
         if len(ACTIONS) >= MAX_ACTIONS:
@@ -98,104 +146,124 @@ def do_action(signal):
             action = False
 
     if action:
+        if ACTIONS:
+            if signal == 'call' and last_value >= min(list(ACTIONS.values())):
+                action = False
+            elif signal == 'put' and last_value <= max(list(ACTIONS.values())):
+                action = False
+
+    if action:
         try:
-            print(f"date: {datetime.now().strftime('%H:%M:%S')} do {signal.upper()}, currency: {CURRENCY} last_price: {list(STACK.values())[-1]}")
+            print(f"date: {datetime.now().strftime('%H:%M:%S')} do {signal.upper()}, currency: {CURRENCY} last_value: {last_value}")
             driver.find_element(by=By.CLASS_NAME, value=f'btn-{signal}').click()
-            ACTIONS.append(datetime.now())
+            ACTIONS[datetime.now()] = last_value
+            IS_AMOUNT_SET = False
         except Exception as e:
             print(e)
 
 
-def get_data(stack):
-    values = list(stack.values())
-    data = []
-    for i in range(PREVIOUS, len(values) + 1, 1):
+def hand_delay():
+    time.sleep(random.choice([0.2, 0.3, 0.4, 0.5, 0.6]))
+    pass
+
+
+def get_amounts(amount):
+    if amount > 1999:
+        amount = 1999
+    amounts = []
+    while True:
+        amount = int(amount / MARTINGALE_COEFFICIENT)
+        amounts.insert(0, amount)
+        if amounts[0] <= 1:
+            amounts[0] = 1
+            print('Amounts:', amounts, 'init deposit:', INIT_DEPOSIT)
+            return amounts
+
+
+def check_indicators(stack):
+    try:
+        deposit = driver.find_element(by=By.CSS_SELECTOR, value='body > div.wrapper > div.wrapper__top > header > div.right-block > div.right-block__item.js-drop-down-modal-open > div > div.balance-info-block__data > div.balance-info-block__balance > div')
+    except Exception as e:
+        print(e)
+
+    global IS_AMOUNT_SET, AMOUNTS, INIT_DEPOSIT
+
+    if not INIT_DEPOSIT:
+        INIT_DEPOSIT = float(deposit.text)
+
+    if not AMOUNTS:  # only for init purpose
+        AMOUNTS = get_amounts(float(deposit.text))
+
+    if not IS_AMOUNT_SET:
+        if ACTIONS and list(ACTIONS.keys())[-1] + timedelta(seconds=6) > datetime.now():  # PERIOD - 4 is enough for changes
+            return
+
         try:
-            row = []
-            for j in range(0, PREVIOUS + STEP, STEP):
-                row.append(values[i - j])  # get previous 21 prices
-            row.reverse()
-            row.append(1 if values[i] >= values[i + STEP] else 0)  # append result: 1 if put success, 0 otherwise
-            data.append(row)
+            closed_tab = driver.find_element(by=By.CSS_SELECTOR, value='#bar-chart > div > div > div.right-widget-container > div > div.widget-slot__header > div.divider > ul > li:nth-child(2) > a')
+            closed_tab_parent = closed_tab.find_element(by=By.XPATH, value='..')
+            if closed_tab_parent.get_attribute('class') == '':
+                closed_tab_parent.click()
         except:
             pass
-    return data
 
-
-def get_last_row(stack):
-    values = list(stack.values())
-    row = []
-    for j in range(0, PREVIOUS + STEP, STEP):
-        row.append(values[- j - 1])
-    row.reverse()
-    return row
-
-
-def check_prediction(stack):
-    data = get_data(stack)  # get previous 20 prices and the current one with profit column
-    df = pd.DataFrame(data, columns=HEADER)
-
-    X = df.iloc[:, :21]  # get all prices without profit column
-    y = df['profit']  # get only profit column
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-
-    model = DecisionTreeClassifier()
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-    model_accuracy = accuracy_score(y_test, y_pred)  # get accuracy
-    print(f'Accuracy: {round(model_accuracy, 2)}, len_stack: {len(stack)}')
-
-    df2 = pd.DataFrame([get_last_row(stack), ], columns=HEADER[:-1])  # create df only with the last row
-    y_pred = model.predict(df2)  # predict its profit
-
-    if y_pred[-1] == 0:
-        print(f'Do call by prediction')
-        do_action('call')
-    else:
-        print(f'Do put by prediction')
-        do_action('put')
-
-
-def check_closed_trades():
-    try:
-        closed_tab = driver.find_element(by=By.CSS_SELECTOR, value='#bar-chart > div > div > div.right-widget-container > div > div.widget-slot__header > div.divider > ul > li:nth-child(2) > a')
-        closed_tab_parent = closed_tab.find_element(by=By.XPATH, value='..')
-        if closed_tab_parent.get_attribute('class') == '':
-            closed_tab_parent.click()
-        closed_trades = driver.find_elements(by=By.CLASS_NAME, value='centered')
         closed_trades_currencies = driver.find_elements(by=By.CLASS_NAME, value='deals-list__item')
-        if len(closed_trades) >= CLOSED_TRADES_LENGTH:
-            minus_trades = 0
-            for i, closed_trade in enumerate(closed_trades[:CLOSED_TRADES_LENGTH]):
-                if '$0.00' in closed_trade.text:
-                    if CURRENCY in closed_trades_currencies[i].text:
-                        minus_trades += 1
-            if minus_trades == CLOSED_TRADES_LENGTH:
-                change_currency()
-    except Exception as e:
-        pass
+        if closed_trades_currencies:
+            last_split = closed_trades_currencies[0].text.split('\n')
+            try:
+                amount = driver.find_element(by=By.CSS_SELECTOR, value='#put-call-buttons-chart-1 > div > div.blocks-wrap > div.block.block--bet-amount > div.block__control.control > div.control__value.value.value--several-items > div > input[type=text]')
+                amount_value = int(amount.get_attribute('value')[1:])
+                base = '#modal-root > div > div > div > div > div.virtual-keyboard.js-virtual-keyboard > div > div:nth-child(%s) > div'
+                if '0.00' not in last_split[4]:  # win
+                    if amount_value > 1:
+                        amount.click()
+                        hand_delay()
+                        driver.find_element(by=By.CSS_SELECTOR, value=base % NUMBERS['1']).click()
+                        AMOUNTS = get_amounts(float(deposit.text))  # refresh amounts
+                elif '0.00' not in last_split[3]:  # draw
+                    pass
+                else:  # lose
+                    amount.click()
+                    time.sleep(random.choice([0.6, 0.7, 0.8, 0.9, 1.0, 1.1]))
+                    if amount_value in AMOUNTS and AMOUNTS.index(amount_value) + 1 < len(AMOUNTS):
+                        next_amount = AMOUNTS[AMOUNTS.index(amount_value) + 1]
+                        for number in str(next_amount):
+                            driver.find_element(by=By.CSS_SELECTOR, value=base % NUMBERS[number]).click()
+                            hand_delay()
+                    else:  # reset to 1
+                        driver.find_element(by=By.CSS_SELECTOR, value=base % NUMBERS['1']).click()
+                        hand_delay()
+                closed_tab_parent.click()
+            except Exception as e:
+                print(e)
+        IS_AMOUNT_SET = True
+
+    if datetime.now().second % 10 != 0:
+        return
+
+    if list(stack.values())[-1] < list(stack.values())[-1 - PERIOD]:
+        do_action('put')
+    else:
+        do_action('call')
 
 
 def websocket_log(stack):
     try:
         estimated_profit = driver.find_element(by=By.CLASS_NAME, value='estimated-profit-block__text').text
         if estimated_profit != '+92%':
-            # print('The profit is less than 92% -> switching to another currency')
-            # time.sleep(random.random() * 10)  # 1-10 sec
-            # change_currency()  # TODO: enable it
+            print('The profit is less than 92% -> switching to another currency')
+            time.sleep(random.random() * 10)  # 1-10 sec
+            change_currency()
             pass
     except:
         pass
 
-    global CURRENCY, CURRENCY_CHANGE, CURRENCY_CHANGE_DATE, LAST_REFRESH, HISTORY_TAKEN
+    global CURRENCY, CURRENCY_CHANGE, CURRENCY_CHANGE_DATE, LAST_REFRESH, HISTORY_TAKEN, MODEL, INIT_DEPOSIT
     try:
         current_symbol = driver.find_element(by=By.CLASS_NAME, value='current-symbol').text
         if current_symbol != CURRENCY:
             CURRENCY = current_symbol
             CURRENCY_CHANGE = True
             CURRENCY_CHANGE_DATE = datetime.now()
-            # print(f'Currency changed to {current_symbol}')
     except:
         pass
 
@@ -204,7 +272,8 @@ def websocket_log(stack):
         HISTORY_TAKEN = False  # take history again
         driver.refresh()  # refresh page to cut off unwanted signals
         CURRENCY_CHANGE = False
-        # print('currency_change is False')
+        MODEL = None
+        INIT_DEPOSIT = None
 
     for wsData in driver.get_log('performance'):
         message = json.loads(wsData['message'])['message']
@@ -213,13 +282,9 @@ def websocket_log(stack):
             payload_str = base64.b64decode(response['payloadData']).decode('utf-8')
             data = json.loads(payload_str)
             if not HISTORY_TAKEN:
-                if 'asset' in data and 'data' in data:
-                    HISTORY_TAKEN = True
-                    stack = {int(d['time']): d['price'] for d in data['data']}
-                    print(f"History taken for asset: {data['asset']}, period: {data['period']}, len_history: {len(data['data'])}, len_stack: {len(stack)}")
-                # if 'history' in data:
-                #     stack = {int(d[0]): d[1] for d in data['history']}
-                #     print(f"History taken for asset: {data['asset']}, period: {data['period']}, len_history: {len(data['history'])}, len_stack: {len(stack)}")
+                if 'history' in data:
+                    stack = {int(d[0]): d[1] for d in data['history']}
+                    print(f"History taken for asset: {data['asset']}, period: {data['period']}, len_history: {len(data['history'])}, len_stack: {len(stack)}")
             try:
                 current_symbol = driver.find_element(by=By.CLASS_NAME, value='current-symbol').text
                 symbol, timestamp, value = data[0]
@@ -243,8 +308,7 @@ def websocket_log(stack):
                 print(f"Len > {LENGTH_STACK_MAX}!!")
                 stack = {}  # refresh then
             if len(stack) >= LENGTH_STACK_MIN:
-                # check_closed_trades()  # TODO: enable it
-                check_prediction(stack)
+                check_indicators(stack)
     return stack
 
 
