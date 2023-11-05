@@ -72,8 +72,10 @@ NUMBERS = {
 }
 IS_AMOUNT_SET = True
 AMOUNTS = []  # 1, 3, 8, 18, 39, 82, 172
-EARNINGS = 15  # euros.
+CURRENT_WINS = 0
+MAX_WINS = 15  # in you win 15 times, change a currency
 MARTINGALE_COEFFICIENT = 2.0  # everything < 2 have worse profitability
+MART = False
 
 options = Options()
 options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
@@ -105,6 +107,9 @@ companies = {
     'Cisco OTC': '#CSCO_otc',
     'Citigroup Inc OTC': 'CITI_otc',
 }
+ORDERS = []
+PUTS = []
+CALLS = []
 
 
 def load_web_driver():
@@ -117,12 +122,19 @@ def change_currency():
     current_symbol.click()
     # time.sleep(random.random())  # 0-1 sec
     currencies = driver.find_elements(By.XPATH, "//li[contains(., '92%')]")
+    # filtered_currencies = []
+    #
+    # for currency in currencies:
+    #     if CURRENCY not in currency.text:
+    #         filtered_currencies.append(currency)
+
     if currencies:
         # click random currency
         while True:
             currency = random.choice(currencies)
             if CURRENCY not in currency.text:
                 break  # avoid repeats
+        print('old currency:', CURRENCY, 'new currency:', currency.text)
         currency.click()
     else:
         pass
@@ -163,30 +175,62 @@ def do_action(signal):
 
 
 def hand_delay():
-    time.sleep(random.choice([0.2, 0.3, 0.4, 0.5, 0.6]))
-    pass
+    time.sleep(0.2)
+    # time.sleep(random.choice([0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]))
 
 
 def get_amounts(amount):
-    if amount > 1999:
-        amount = 1999
-    amounts = []
-    while True:
-        amount = int(amount / MARTINGALE_COEFFICIENT)
-        amounts.insert(0, amount)
-        if amounts[0] <= 1:
-            amounts[0] = 1
-            print('Amounts:', amounts, 'init deposit:', INIT_DEPOSIT)
-            return amounts
+    # if amount > 1999:
+    # amounts = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 999]
+    # amounts = [1, 3, 5, 12, 25, 51, 104, 215, 438, 888]
+    # amounts = [1, 4, 9, 20, 42, 89, 187, 391, 817]
+    # amounts = [4, 10, 30, 80, 200, 450, 999]
+    amounts = [77, 1, 2, 5, 11, 24, 52, 108, 225, 460, 980]
+    print('Amounts:', amounts, 'init deposit:', INIT_DEPOSIT)
+    return amounts
+    # amounts = []
+    # while True:
+    #     amount = int(amount / MARTINGALE_COEFFICIENT)
+    #     amounts.insert(0, amount)
+    #     if amounts[0] <= 1:
+    #         amounts[0] = 1
+    #         print('Amounts:', amounts, 'init deposit:', INIT_DEPOSIT)
+    #         return amounts
 
 
 def check_indicators(stack):
+    # rename function name
+    # rm actions
+    # use 1 also
+    # refactor logic without IS_AMOUNT_SET
+
+    global IS_AMOUNT_SET, AMOUNTS, INIT_DEPOSIT, CURRENT_WINS, ORDERS, PUTS, CALLS, MART
+
+    tim = datetime.now()
+
+    if len(PUTS) + len(CALLS) >= len(ORDERS) + 2:
+        print(tim, 'draw all lists, as they are not in sync')
+        PUTS, CALLS, ORDERS = [], [], []
+
+    if len(PUTS) > 0 and PUTS[-1][0] == (tim - timedelta(seconds=5)).strftime('%H:%M:%S'):
+        if PUTS[-1][1] > list(stack.values())[-1]:  # win
+            ORDERS.append(1)
+        elif PUTS[-1][1] < list(stack.values())[-1]:  # loose
+            ORDERS.append(-1)
+        else:  # draw
+            ORDERS.append(0)
+    elif len(CALLS) > 0 and CALLS[-1][0] == (tim - timedelta(seconds=5)).strftime('%H:%M:%S'):
+        if CALLS[-1][1] < list(stack.values())[-1]:  # win
+            ORDERS.append(1)
+        elif CALLS[-1][1] > list(stack.values())[-1]:  # loose
+            ORDERS.append(-1)
+        else:  # draw
+            ORDERS.append(0)
+
     try:
         deposit = driver.find_element(by=By.CSS_SELECTOR, value='body > div.wrapper > div.wrapper__top > header > div.right-block > div.right-block__item.js-drop-down-modal-open > div > div.balance-info-block__data > div.balance-info-block__balance > div')
     except Exception as e:
         print(e)
-
-    global IS_AMOUNT_SET, AMOUNTS, INIT_DEPOSIT
 
     if not INIT_DEPOSIT:
         INIT_DEPOSIT = float(deposit.text)
@@ -194,34 +238,29 @@ def check_indicators(stack):
     if not AMOUNTS:  # only for init purpose
         AMOUNTS = get_amounts(float(deposit.text))
 
+
     if not IS_AMOUNT_SET:
-        if ACTIONS and list(ACTIONS.keys())[-1] + timedelta(seconds=6) > datetime.now():  # PERIOD - 4 is enough for changes
-            return
-
-        try:
-            closed_tab = driver.find_element(by=By.CSS_SELECTOR, value='#bar-chart > div > div > div.right-widget-container > div > div.widget-slot__header > div.divider > ul > li:nth-child(2) > a')
-            closed_tab_parent = closed_tab.find_element(by=By.XPATH, value='..')
-            if closed_tab_parent.get_attribute('class') == '':
-                closed_tab_parent.click()
-        except:
-            pass
-
-        closed_trades_currencies = driver.find_elements(by=By.CLASS_NAME, value='deals-list__item')
-        if closed_trades_currencies:
-            last_split = closed_trades_currencies[0].text.split('\n')
+        if len(PUTS) + len(CALLS) == len(ORDERS):
             try:
                 amount = driver.find_element(by=By.CSS_SELECTOR, value='#put-call-buttons-chart-1 > div > div.blocks-wrap > div.block.block--bet-amount > div.block__control.control > div.control__value.value.value--several-items > div > input[type=text]')
                 amount_value = int(amount.get_attribute('value')[1:])
                 base = '#modal-root > div > div > div > div > div.virtual-keyboard.js-virtual-keyboard > div > div:nth-child(%s) > div'
-                if '0.00' not in last_split[4]:  # win
-                    if amount_value > 1:
+
+                if ORDERS[-1] == 1:  # win
+                    if amount_value != AMOUNTS[0]:
+                    # if amount_value > 1:
                         amount.click()
-                        hand_delay()
-                        driver.find_element(by=By.CSS_SELECTOR, value=base % NUMBERS['1']).click()
+                        for number in str(AMOUNTS[0]):
+                            driver.find_element(by=By.CSS_SELECTOR, value=base % NUMBERS[number]).click()
+                            hand_delay()
                         AMOUNTS = get_amounts(float(deposit.text))  # refresh amounts
-                elif '0.00' not in last_split[3]:  # draw
+                    MART = False
+                    print('win, return to AMOUNTS[0]')
+                elif ORDERS[-1] == 0:  # draw
+                    print('draw, do nothing')
                     pass
-                else:  # lose
+                elif MART or ORDERS[-1] == ORDERS[-2] == ORDERS[-3] == -1:
+                    MART = True
                     amount.click()
                     time.sleep(random.choice([0.6, 0.7, 0.8, 0.9, 1.0, 1.1]))
                     if amount_value in AMOUNTS and AMOUNTS.index(amount_value) + 1 < len(AMOUNTS):
@@ -229,21 +268,42 @@ def check_indicators(stack):
                         for number in str(next_amount):
                             driver.find_element(by=By.CSS_SELECTOR, value=base % NUMBERS[number]).click()
                             hand_delay()
-                    else:  # reset to 1
-                        driver.find_element(by=By.CSS_SELECTOR, value=base % NUMBERS['1']).click()
+                        print(f'loose, increase to {next_amount}')
+                    else:  # reset to first_value
+                        # driver.find_element(by=By.CSS_SELECTOR, value=base % NUMBERS['1']).click()
+                        for number in str(AMOUNTS[0]):
+                            driver.find_element(by=By.CSS_SELECTOR, value=base % NUMBERS[number]).click()
+                            hand_delay()
                         hand_delay()
-                closed_tab_parent.click()
+                        print('loose, change to AMOUNTS[0]')
+                hand_delay()
+                driver.find_element(by=By.CSS_SELECTOR, value='#bar-chart > div > div > div.right-widget-container > div > div.widget-slot__header > div.title.flex-centered > span').click()
+                IS_AMOUNT_SET = True
             except Exception as e:
                 print(e)
-        IS_AMOUNT_SET = True
+
+    print('Let puts + calls:', len(PUTS) + len(CALLS), 'len orders:', len(ORDERS), 'IS_AMOUNT_SET:', IS_AMOUNT_SET, 'MART:', MART)
 
     if datetime.now().second % 10 != 0:
         return
 
-    if list(stack.values())[-1] < list(stack.values())[-1 - PERIOD]:
-        do_action('put')
+    amount = driver.find_element(by=By.CSS_SELECTOR, value='#put-call-buttons-chart-1 > div > div.blocks-wrap > div.block.block--bet-amount > div.block__control.control > div.control__value.value.value--several-items > div > input[type=text]')
+    amount_value = int(amount.get_attribute('value')[1:])
+
+    if list(stack.values())[-1] < list(stack.values())[-5]:
+        PUTS.append([tim.strftime('%H:%M:%S'), list(stack.values())[-1]])
+        if MART:
+            driver.find_element(by=By.CLASS_NAME, value=f'btn-put').click()
+        IS_AMOUNT_SET = False
+        print(tim, 'Make put order')
+    elif list(stack.values())[-1] > list(stack.values())[-5]:
+        CALLS.append([tim.strftime('%H:%M:%S'), list(stack.values())[-1]])
+        if MART:
+            driver.find_element(by=By.CLASS_NAME, value=f'btn-call').click()
+        IS_AMOUNT_SET = False
+        print(tim, 'Make call order')
     else:
-        do_action('call')
+        print(tim, "don't make an action")
 
 
 def websocket_log(stack):
@@ -258,6 +318,7 @@ def websocket_log(stack):
         pass
 
     global CURRENCY, CURRENCY_CHANGE, CURRENCY_CHANGE_DATE, LAST_REFRESH, HISTORY_TAKEN, MODEL, INIT_DEPOSIT
+    global CURRENT_WINS
     try:
         current_symbol = driver.find_element(by=By.CLASS_NAME, value='current-symbol').text
         if current_symbol != CURRENCY:
@@ -274,6 +335,7 @@ def websocket_log(stack):
         CURRENCY_CHANGE = False
         MODEL = None
         INIT_DEPOSIT = None
+        CURRENT_WINS = 0
 
     for wsData in driver.get_log('performance'):
         message = json.loads(wsData['message'])['message']
