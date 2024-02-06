@@ -16,7 +16,7 @@ PERIOD = 0  # PERIOD on the graph in seconds, one of: 5, 10, 15, 30, 60, 300 etc
 CANDLES = []
 ACTIONS = {}  # dict of {datetime: value} when an action has been made
 MAX_ACTIONS = 1  # how many actions allowed at the period of time
-ACTIONS_SECONDS = PERIOD * 3  # how long action still in ACTIONS
+ACTIONS_SECONDS = PERIOD  # how long action still in ACTIONS
 LAST_REFRESH = datetime.now()
 CURRENCY = None
 CURRENCY_CHANGE = False
@@ -111,19 +111,22 @@ def get_quotes():
 
 def check_indicators():
     quotes = get_quotes()
-    parabolic_sar = indicators.get_parabolic_sar(quotes, acceleration_step=0.02, max_acceleration_factor=0.2)
-    awesome_oscillator = indicators.get_awesome(quotes, fast_periods=2, slow_periods=34)
-    ao1 = Decimal(awesome_oscillator[-1].oscillator)  # last oscillator
-    ao2 = Decimal(awesome_oscillator[-2].oscillator)  # previous last oscillator
+    parabolic_sar = indicators.get_parabolic_sar(quotes)
+    # awesome_oscillator = indicators.get_awesome(quotes, fast_periods=2, slow_periods=34)
+    # ao1 = Decimal(awesome_oscillator[-1].oscillator)  # last oscillator
+    # ao2 = Decimal(awesome_oscillator[-2].oscillator)  # previous last oscillator
+    # marubozu = indicators.get_marubozu(quotes)
+    # supertrend = indicators.get_super_trend(quotes)
+    sma_long = indicators.get_sma(quotes, lookback_periods=7)
+    sma_short = indicators.get_sma(quotes, lookback_periods=3)
+    fractal = indicators.get_fractal(quotes)
 
-    print('PSAR:', parabolic_sar[-1].sar, 'ao1:', ao1, 'ao2:', ao2)
+    if sma_short[-2].sma < sma_long[-2].sma and sma_short[-1].sma > sma_long[-1].sma and fractal[-1].fractal_bear:
+        do_action('put')
+    elif sma_short[-2].sma > sma_long[-2].sma and sma_short[-1].sma < sma_long[-1].sma and fractal[-1].fractal_bull:
+        do_action('call')
 
-    if parabolic_sar[-1].is_reversal:
-        print('PSAR is reversal')
-        if ao1 <= 0 <= ao2:
-            do_action('put')
-        if ao1 >= 0 >= ao2:
-            do_action('call')
+    print(quotes[-1].date, 'working...')
 
 
 def websocket_log():
@@ -137,7 +140,7 @@ def websocket_log():
     except:
         pass
 
-    if CURRENCY_CHANGE and CURRENCY_CHANGE_DATE < datetime.now() - timedelta(seconds=3):
+    if CURRENCY_CHANGE and CURRENCY_CHANGE_DATE < datetime.now() - timedelta(seconds=5):
         driver.refresh()  # refresh page to cut off unwanted signals
         CURRENCY_CHANGE = False
         CANDLES = []
@@ -152,6 +155,10 @@ def websocket_log():
             if 'asset' in data and 'candles' in data:  # 5m
                 PERIOD = data['period']
                 CANDLES = list(reversed(data['candles']))  # timestamp open close high low
+                # import pandas as pd
+                # df = pd.DataFrame([{'timestamp': c[0], 'open': c[1], 'close': c[2], 'high': c[3], 'low': c[4]} for c in CANDLES], dtype=float)
+                # tim = datetime.fromtimestamp(CANDLES[0][0])
+                # df.to_csv(f'data_{PERIOD//60}m/{CURRENCY.replace("/", "").replace(" ", "")}_{tim.year}_{tim.month}_{tim.day}_{tim.hour}.csv')
                 CANDLES.append([CANDLES[-1][0] + PERIOD, CANDLES[-1][1], CANDLES[-1][2], CANDLES[-1][3], CANDLES[-1][4]])
                 for tstamp, value in data['history']:
                     tstamp = int(float(tstamp))
