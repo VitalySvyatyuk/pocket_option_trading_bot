@@ -27,7 +27,7 @@ options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
 options.add_argument('--ignore-ssl-errors')
 options.add_argument('--ignore-certificate-errors')
 options.add_argument('--ignore-certificate-errors-spki-list')
-options.add_argument(r'--user-data-dir=default')
+options.add_argument('--user-data-dir=default')
 # chromedriver can be downloaded from here: https://googlechromelabs.github.io/chrome-for-testing/
 service = Service(executable_path=r'/Users/vitaly/Downloads/chromedriver-mac-arm64/chromedriver')
 driver = webdriver.Chrome(options=options, service=service)
@@ -111,19 +111,19 @@ def get_quotes():
 
 def check_indicators():
     quotes = get_quotes()
-    parabolic_sar = indicators.get_parabolic_sar(quotes)
-    # awesome_oscillator = indicators.get_awesome(quotes, fast_periods=2, slow_periods=34)
-    # ao1 = Decimal(awesome_oscillator[-1].oscillator)  # last oscillator
-    # ao2 = Decimal(awesome_oscillator[-2].oscillator)  # previous last oscillator
-    # marubozu = indicators.get_marubozu(quotes)
-    # supertrend = indicators.get_super_trend(quotes)
+    psar = indicators.get_parabolic_sar(quotes)
+    awesome_oscillator = indicators.get_awesome(quotes, fast_periods=2, slow_periods=34)
+    marubozu = indicators.get_marubozu(quotes)
+    supertrend = indicators.get_super_trend(quotes)
     sma_long = indicators.get_sma(quotes, lookback_periods=7)
     sma_short = indicators.get_sma(quotes, lookback_periods=3)
-    fractal = indicators.get_fractal(quotes)
+    fractal = indicators.get_fractal(quotes, )
+    macd = indicators.get_macd(quotes)
 
-    if sma_short[-2].sma < sma_long[-2].sma and sma_short[-1].sma > sma_long[-1].sma and fractal[-1].fractal_bear:
+    # if psar[-1].is_reversal:
+    if quotes[-1].close > quotes[-1].open:
         do_action('put')
-    elif sma_short[-2].sma > sma_long[-2].sma and sma_short[-1].sma < sma_long[-1].sma and fractal[-1].fractal_bull:
+    elif quotes[-1].close < quotes[-1].open:
         do_action('call')
 
     print(quotes[-1].date, 'working...')
@@ -155,10 +155,6 @@ def websocket_log():
             if 'asset' in data and 'candles' in data:  # 5m
                 PERIOD = data['period']
                 CANDLES = list(reversed(data['candles']))  # timestamp open close high low
-                # import pandas as pd
-                # df = pd.DataFrame([{'timestamp': c[0], 'open': c[1], 'close': c[2], 'high': c[3], 'low': c[4]} for c in CANDLES], dtype=float)
-                # tim = datetime.fromtimestamp(CANDLES[0][0])
-                # df.to_csv(f'data_{PERIOD//60}m/{CURRENCY.replace("/", "").replace(" ", "")}_{tim.year}_{tim.month}_{tim.day}_{tim.hour}.csv')
                 CANDLES.append([CANDLES[-1][0] + PERIOD, CANDLES[-1][1], CANDLES[-1][2], CANDLES[-1][3], CANDLES[-1][4]])
                 for tstamp, value in data['history']:
                     tstamp = int(float(tstamp))

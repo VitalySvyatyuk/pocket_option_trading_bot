@@ -31,4 +31,5 @@ This script will make you poor in the long run:
 - there is 94% chance to increase your $3000 to $3100 and 6% of losing everything
 - there is 0.05% chance to increase your $100 to $3100
 
-For donations: `TN4pGa8q6r7wJBDVLvAzmRKrMvTrftwi8a`
+### Donations
+Send your BTC here: `bc1qemxzzy6rq6ycxjn0f00yqgptjqldkms8g2ucu0`
