@@ -32,10 +32,10 @@ This script will make you poor in the long run:
 - there is 0.05% chance to increase your $100 to $3100
 
 ### Pocket Option trading bot with indicators
-`po_bot_indicators.py` - script allows you to try different indicators and their combinations. See how an example works and make your updates.
+`po_bot_indicators.py` - script allows you to try different indicators and their combinations. See how an example works and make your updates. Works for 1m and higher timeframes.
 
 ### Pocket Option trading bot with machine learning
-`po_bot_ml.py` - script makes orders based on prediction. Random Forest Classifier approach is used.
+`po_bot_ml.py` - script makes orders based on prediction. Random Forest Classifier approach is used. Works for 1m and higher timeframes.
 
 ### Donations
 Send your BTC here: `bc1qemxzzy6rq6ycxjn0f00yqgptjqldkms8g2ucu0`
