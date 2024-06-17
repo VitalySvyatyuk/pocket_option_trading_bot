@@ -28,30 +28,6 @@ CURRENCY_CHANGE = False
 CURRENCY_CHANGE_DATE = datetime.now()
 HISTORY_TAKEN = False  # becomes True when history is taken. History length is 900-1800
 CLOSED_TRADES_LENGTH = 3
-HEADER = [
-    # '00',
-    # '01', '02', '03', '04', '05', '06', '07', '08', '09', '10',
-    # '11', '12', '13', '14', '15', '16', '17', '18', '19', '20',
-    # '21', '22', '23', '24', '25', '26', '27', '28', '29', '30',
-    # '31', '32', '33', '34', '35', '36', '37', '38', '39', '40',
-    # '41', '42', '43', '44', '45', '46', '47', '48', '49', '50',
-    'adx',
-    'pdi',
-    'mdi',
-    'rsi',
-    'trend',
-    'psar',
-    'aroon_up',
-    'aroon_down',
-    'oscillator',
-    'vortex_pvi',
-    'vortex_nvi',
-    'stoch_rsi',
-    'stoch_signal',
-    'macd',
-    'macd_signal',
-    'profit',
-]
 MODEL = None
 SCALER = None
 PREVIOUS = 1200
@@ -81,9 +57,14 @@ options.add_argument('--ignore-ssl-errors')
 options.add_argument('--ignore-certificate-errors')
 options.add_argument('--ignore-certificate-errors-spki-list')
 options.add_argument(r'--user-data-dir=/Users/vitaly/Library/Application Support/Google/Chrome/Default')
-# chromedriver can be downloaded from here: https://googlechromelabs.github.io/chrome-for-testing/
-service = Service(executable_path=r'/Users/vitaly/Downloads/chromedriver-mac-arm64/chromedriver')
-driver = webdriver.Chrome(options=options, service=service)
+# chromedriver can be downloaded from: https://googlechromelabs.github.io/chrome-for-testing/
+try:
+    service = Service(executable_path=r'/Users/vitaly/Downloads/chromedriver-mac-arm64/chromedriver')
+    driver = webdriver.Chrome(options=options, service=service)
+except Exception as e:
+    service = Service()
+    driver = webdriver.Chrome(options=options, service=service)
+
 companies = {
     'Apple OTC': '#AAPL_otc',
     'American Express OTC': '#AXP_otc',
@@ -247,15 +228,16 @@ def check_indicators(stack):
 
 
 def websocket_log(stack):
-    try:
-        estimated_profit = driver.find_element(by=By.CLASS_NAME, value='estimated-profit-block__text').text
-        if estimated_profit != '+92%':
-            print('The profit is less than 92% -> switching to another currency')
-            time.sleep(random.random() * 10)  # 1-10 sec
-            change_currency()
-            pass
-    except:
-        pass
+    # try:
+    #     estimated_profit = driver.find_element(by=By.CLASS_NAME, value='estimated-profit-block__text').text
+    #     # if estimated_profit != '+92%':
+    #     if int(estimated_profit.replace('+', '').replace('%', '')) < 92:
+    #         print('The profit is less than 92% -> switching to another currency')
+    #         time.sleep(random.random() * 10)  # 1-10 sec
+    #         change_currency()
+    #         pass
+    # except:
+    #     pass
 
     global CURRENCY, CURRENCY_CHANGE, CURRENCY_CHANGE_DATE, LAST_REFRESH, HISTORY_TAKEN, MODEL, INIT_DEPOSIT
     try:
