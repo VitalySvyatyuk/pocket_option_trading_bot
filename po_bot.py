@@ -13,7 +13,7 @@ from selenium.webdriver.common.by import By
 BASE_URL = 'https://pocketoption.com'  # change if PO is blocked in your country
 LENGTH_STACK_MIN = 460
 LENGTH_STACK_MAX = 1000  # 4000
-PERIOD = 5  # PERIOD on the graph
+PERIOD = 60  # PERIOD on the graph
 TIME = 1  # quotes
 SMA_LONG = 50
 SMA_SHORT = 8
@@ -176,7 +176,7 @@ def check_indicators(stack):
         AMOUNTS = get_amounts(float(deposit.text))
 
     if not IS_AMOUNT_SET:
-        if ACTIONS and list(ACTIONS.keys())[-1] + timedelta(seconds=6) > datetime.now():  # PERIOD - 4 is enough for changes
+        if ACTIONS and list(ACTIONS.keys())[-1] + timedelta(seconds=PERIOD + 5) > datetime.now():
             return
 
         try:
@@ -218,27 +218,15 @@ def check_indicators(stack):
                 print(e)
         IS_AMOUNT_SET = True
 
-    if datetime.now().second % 10 != 0:
-        return
+    if IS_AMOUNT_SET and datetime.now().second % 10 == 0:
 
-    if list(stack.values())[-1] < list(stack.values())[-1 - PERIOD]:
-        do_action('put')
-    else:
-        do_action('call')
+        if list(stack.values())[-1] < list(stack.values())[-1 - PERIOD]:
+            do_action('put')
+        else:
+            do_action('call')
 
 
 def websocket_log(stack):
-    # try:
-    #     estimated_profit = driver.find_element(by=By.CLASS_NAME, value='estimated-profit-block__text').text
-    #     # if estimated_profit != '+92%':
-    #     if int(estimated_profit.replace('+', '').replace('%', '')) < 92:
-    #         print('The profit is less than 92% -> switching to another currency')
-    #         time.sleep(random.random() * 10)  # 1-10 sec
-    #         change_currency()
-    #         pass
-    # except:
-    #     pass
-
     global CURRENCY, CURRENCY_CHANGE, CURRENCY_CHANGE_DATE, LAST_REFRESH, HISTORY_TAKEN, MODEL, INIT_DEPOSIT
     try:
         current_symbol = driver.find_element(by=By.CLASS_NAME, value='current-symbol').text
