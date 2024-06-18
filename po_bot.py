@@ -220,9 +220,9 @@ def check_indicators(stack):
 
     if IS_AMOUNT_SET and datetime.now().second % 10 == 0:
 
-        if list(stack.values())[-1] < list(stack.values())[-1 - PERIOD]:
+        if list(stack.values())[-1] < list(stack.values())[-1 - PERIOD] < list(stack.values())[-1 - PERIOD * 2]:
             do_action('put')
-        else:
+        if list(stack.values())[-1] > list(stack.values())[-1 - PERIOD] > list(stack.values())[-1 - PERIOD * 2]:
             do_action('call')
 
 
