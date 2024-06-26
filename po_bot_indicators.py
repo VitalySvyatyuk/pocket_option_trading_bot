@@ -126,11 +126,11 @@ def check_indicators():
     fractal = indicators.get_fractal(quotes, )
     macd = indicators.get_macd(quotes)
 
-    # if psar[-1].is_reversal:
-    if quotes[-1].close > quotes[-1].open:
-        do_action('put')
-    elif quotes[-1].close < quotes[-1].open:
-        do_action('call')
+    if psar[-1].is_reversal:
+        if quotes[-1].close > quotes[-1].open:
+            do_action('put')
+        elif quotes[-1].close < quotes[-1].open:
+            do_action('call')
 
     print(quotes[-1].date, 'working...')
 
