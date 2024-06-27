@@ -126,11 +126,10 @@ def check_indicators():
     fractal = indicators.get_fractal(quotes, )
     macd = indicators.get_macd(quotes)
 
-    if psar[-1].is_reversal:
-        if quotes[-1].close > quotes[-1].open:
-            do_action('put')
-        elif quotes[-1].close < quotes[-1].open:
-            do_action('call')
+    if quotes[-1].close < psar[-1].sar and quotes[-2].close > psar[-2].sar:
+        do_action('put')
+    if quotes[-1].close > psar[-1].sar and quotes[-2].close < psar[-2].sar:
+        do_action('call')
 
     print(quotes[-1].date, 'working...')
 
@@ -167,7 +166,7 @@ def websocket_log():
                     CANDLES[-1][2] = value  # set close all the time
                     if value > CANDLES[-1][3]:  # set high
                         CANDLES[-1][3] = value
-                    elif value < CANDLES[-1][4]:  # set low
+                    if value < CANDLES[-1][4]:  # set low
                         CANDLES[-1][4] = value
                     if tstamp % PERIOD == 0:
                         if tstamp not in [c[0] for c in CANDLES]:
@@ -178,7 +177,7 @@ def websocket_log():
                 CANDLES[-1][2] = current_value  # set close all the time
                 if current_value > CANDLES[-1][3]:  # set high
                     CANDLES[-1][3] = current_value
-                elif current_value < CANDLES[-1][4]:  # set low
+                if current_value < CANDLES[-1][4]:  # set low
                     CANDLES[-1][4] = current_value
                 tstamp = int(float(data[0][1]))
                 if tstamp % PERIOD == 0:
