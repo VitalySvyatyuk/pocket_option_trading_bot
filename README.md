@@ -9,6 +9,12 @@ Chromedriver can be downloaded from here: https://googlechromelabs.github.io/chr
 
 ### Run
 `python3 po_bot.py`
+or
+
+`python3 po_bot_indicators.py`
+or
+
+`python3 po_bot_ml.py`
 
 ### After authorization:
 - switch account to `DEMO`
