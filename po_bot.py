@@ -4,11 +4,9 @@ import random
 import time
 from datetime import datetime, timedelta
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 
+from utils import companies, get_driver
 
 BASE_URL = 'https://pocketoption.com'  # change if PO is blocked in your country
 LENGTH_STACK_MIN = 460
@@ -51,41 +49,7 @@ AMOUNTS = []  # 1, 3, 8, 18, 39, 82, 172
 EARNINGS = 15  # euros.
 MARTINGALE_COEFFICIENT = 2.0  # everything < 2 have worse profitability
 
-options = Options()
-options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
-options.add_argument('--ignore-ssl-errors')
-options.add_argument('--ignore-certificate-errors')
-options.add_argument('--ignore-certificate-errors-spki-list')
-options.add_argument(r'--user-data-dir=/Users/vitaly/Library/Application Support/Google/Chrome/Default')
-# chromedriver can be downloaded from: https://googlechromelabs.github.io/chrome-for-testing/
-try:
-    service = Service(executable_path=r'/Users/vitaly/Downloads/chromedriver-mac-arm64/chromedriver')
-    driver = webdriver.Chrome(options=options, service=service)
-except Exception as e:
-    service = Service()
-    driver = webdriver.Chrome(options=options, service=service)
-
-companies = {
-    'Apple OTC': '#AAPL_otc',
-    'American Express OTC': '#AXP_otc',
-    'Boeing Company OTC': '#BA_otc',
-    'Johnson & Johnson OTC': '#JNJ_otc',
-    "McDonald's OTC": '#MCD_otc',
-    'Tesla OTC': '#TSLA_otc',
-    'Amazon OTC': 'AMZN_otc',
-    'VISA OTC': 'VISA_otc',
-    'Netflix OTC': 'NFLX_otc',
-    'Alibaba OTC': 'BABA_otc',
-    'ExxonMobil OTC': '#XOM_otc',
-    'FedEx OTC': 'FDX_otc',
-    'FACEBOOK INC OTC': '#FB_otc',
-    'Pfizer Inc OTC': '#PFE_otc',
-    'Intel OTC': '#INTC_otc',
-    'TWITTER OTC': 'TWITTER_otc',
-    'Microsoft OTC': '#MSFT_otc',
-    'Cisco OTC': '#CSCO_otc',
-    'Citigroup Inc OTC': 'CITI_otc',
-}
+driver = get_driver()
 
 
 def load_web_driver():
@@ -161,7 +125,7 @@ def get_amounts(amount):
             return amounts
 
 
-def check_indicators(stack):
+def check_values(stack):
     try:
         deposit = driver.find_element(by=By.CSS_SELECTOR, value='body > div.wrapper > div.wrapper__top > header > div.right-block > div.right-block__item.js-drop-down-modal-open > div > div.balance-info-block__data > div.balance-info-block__balance > div')
     except Exception as e:
@@ -278,7 +242,7 @@ def websocket_log(stack):
                 print(f"Len > {LENGTH_STACK_MAX}!!")
                 stack = {}  # refresh then
             if len(stack) >= LENGTH_STACK_MIN:
-                check_indicators(stack)
+                check_values(stack)
     return stack
 
 

@@ -1,15 +1,11 @@
 import base64
 import json
-import os
 from datetime import datetime, timedelta
-from decimal import Decimal
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from stock_indicators import indicators
-from stock_indicators.indicators.common.quote import Quote
+
+from utils import get_driver, get_quotes
 
 BASE_URL = 'https://pocketoption.com'  # change if PO is blocked in your country
 PERIOD = 0  # PERIOD on the graph in seconds, one of: 5, 10, 15, 30, 60, 300 etc.
@@ -22,42 +18,7 @@ CURRENCY = None
 CURRENCY_CHANGE = False
 CURRENCY_CHANGE_DATE = datetime.now()
 
-options = Options()
-options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
-options.add_argument('--ignore-ssl-errors')
-options.add_argument('--ignore-certificate-errors')
-options.add_argument('--ignore-certificate-errors-spki-list')
-options.add_argument('--user-data-dir=default')
-# chromedriver can be downloaded from here: https://googlechromelabs.github.io/chrome-for-testing/
-
-try:
-    service = Service(executable_path=r'/Users/vitaly/Downloads/chromedriver-mac-arm64/chromedriver')
-    driver = webdriver.Chrome(options=options, service=service)
-except Exception as e:
-    service = Service()
-    driver = webdriver.Chrome(options=options, service=service)
-
-companies = {
-    'Apple OTC': '#AAPL_otc',
-    'American Express OTC': '#AXP_otc',
-    'Boeing Company OTC': '#BA_otc',
-    'Johnson & Johnson OTC': '#JNJ_otc',
-    "McDonald's OTC": '#MCD_otc',
-    'Tesla OTC': '#TSLA_otc',
-    'Amazon OTC': 'AMZN_otc',
-    'VISA OTC': 'VISA_otc',
-    'Netflix OTC': 'NFLX_otc',
-    'Alibaba OTC': 'BABA_otc',
-    'ExxonMobil OTC': '#XOM_otc',
-    'FedEx OTC': 'FDX_otc',
-    'FACEBOOK INC OTC': '#FB_otc',
-    'Pfizer Inc OTC': '#PFE_otc',
-    'Intel OTC': '#INTC_otc',
-    'TWITTER OTC': 'TWITTER_otc',
-    'Microsoft OTC': '#MSFT_otc',
-    'Cisco OTC': '#CSCO_otc',
-    'Citigroup Inc OTC': 'CITI_otc',
-}
+driver = get_driver()
 
 
 def load_web_driver():
@@ -89,34 +50,8 @@ def do_action(signal):
             print(e)
 
 
-def get_quotes():
-    quotes = []
-    for candle in CANDLES:
-        open = candle[1]
-        close = candle[2]
-        high = candle[3]
-        low = candle[4]
-        if os.name == 'nt':  # windows
-            quotes.append(Quote(
-                date=datetime.fromtimestamp(candle[0]),
-                open=str(open).replace('.', ','),
-                high=str(high).replace('.', ','),
-                low=str(low).replace('.', ','),
-                close=str(close).replace('.', ','),
-                volume=None))
-        else:
-             quotes.append(Quote(
-                date=datetime.fromtimestamp(candle[0]),
-                open=open,
-                high=high,
-                low=low,
-                close=close,
-                volume=None))
-    return quotes
-
-
 def check_indicators():
-    quotes = get_quotes()
+    quotes = get_quotes(CANDLES)
     psar = indicators.get_parabolic_sar(quotes)
     awesome_oscillator = indicators.get_awesome(quotes, fast_periods=2, slow_periods=34)
     marubozu = indicators.get_marubozu(quotes)
