@@ -13,7 +13,7 @@ from utils import get_driver, get_quotes
 
 BASE_URL = 'https://pocketoption.com'  # change if PO is blocked in your country
 PERIOD = 0  # PERIOD on the graph in seconds, one of: 5, 10, 15, 30, 60, 300 etc.
-TIME = 10  # minutes
+TIME = 5  # minutes
 CANDLES = []
 ACTIONS = {}  # dict of {datetime: value} when an action has been made
 MAX_ACTIONS = 1  # how many actions allowed at the period of time
