@@ -5,6 +5,7 @@ import time
 from datetime import datetime, timedelta
 
 from selenium.webdriver.common.by import By
+from stock_indicators import Quote, indicators
 
 from utils import companies, get_driver
 
@@ -125,6 +126,28 @@ def get_amounts(amount):
             return amounts
 
 
+def get_quotes(stack, step):
+    quotes = []
+    quotes_length = (len(stack) // step) * step  # 507 to 505
+
+    keys = list(stack.keys())
+    values = list(stack.values())
+
+    for i in range(len(stack) - quotes_length, len(stack), step):
+        open = values[i]
+        close = values[i + step - 1]
+        high = max(values[i:i + step - 1])
+        low = min(values[i:i + step - 1])
+        quotes.append(Quote(
+            date=datetime.fromtimestamp(keys[i]),
+            open=open,
+            high=high,
+            low=low,
+            close=close,
+            volume=None))  # TODO: add volume somehow?
+    return quotes
+
+
 def check_values(stack):
     try:
         deposit = driver.find_element(by=By.CSS_SELECTOR, value='body > div.wrapper > div.wrapper__top > header > div.right-block > div.right-block__item.js-drop-down-modal-open > div > div.balance-info-block__data > div.balance-info-block__balance > div')
@@ -183,11 +206,16 @@ def check_values(stack):
         IS_AMOUNT_SET = True
 
     if IS_AMOUNT_SET and datetime.now().second % 10 == 0:
-
-        if list(stack.values())[-1] < list(stack.values())[-1 - PERIOD] < list(stack.values())[-1 - PERIOD * 2]:
-            do_action('put')
-        if list(stack.values())[-1] > list(stack.values())[-1 - PERIOD] > list(stack.values())[-1 - PERIOD * 2]:
-            do_action('call')
+        quotes = get_quotes(stack, PERIOD)
+        psar = indicators.get_parabolic_sar(quotes)
+        try:
+            if list(stack.values())[-1] < psar[-1].sar and list(stack.values())[-1 - PERIOD] > psar[-2].sar:
+                do_action('put')
+            if list(stack.values())[-1] > psar[-1].sar and list(stack.values())[-1 - PERIOD] < psar[-2].sar:
+                do_action('call')
+            print('no PSAR condition, working...:')
+        except:
+            print('wrong PSAR, working...:')
 
 
 def websocket_log(stack):
