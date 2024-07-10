@@ -50,6 +50,3 @@ No, my greedy friend. Sometimes, you can have profitable days, but you will lose
 
 `What's the purpose of the Bot then?`
 The goal of the bot is to strengthen your Python programming skills, motivating you with the illusory opportunity to get rich.
-
-`Can I connect with the author and ask some questions?`
-Yes, please send your BTC in the amount of $100 to the address `bc1qemxzzy6rq6ycxjn0f00yqgptjqldkms8g2ucu0` for 1 hour consultancy. Then create an issue with your Telegram login, and I'll write to you soon.
