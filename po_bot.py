@@ -11,8 +11,8 @@ from utils import companies, get_driver
 
 BASE_URL = 'https://pocketoption.com'  # change if PO is blocked in your country
 LENGTH_STACK_MIN = 460
-LENGTH_STACK_MAX = 1000  # 4000
-PERIOD = 60  # PERIOD on the graph
+LENGTH_STACK_MAX = 4000
+PERIOD = 15  # PERIOD on the graph
 TIME = 1  # quotes
 SMA_LONG = 50
 SMA_SHORT = 8
@@ -114,6 +114,10 @@ def hand_delay():
 
 
 def get_amounts(amount):
+    amounts = [2, 5, 11, 24, 52]
+    print('Amounts:', amounts, 'init deposit:', INIT_DEPOSIT)
+    return amounts
+
     if amount > 1999:
         amount = 1999
     amounts = []
@@ -148,7 +152,17 @@ def get_quotes(stack, step):
     return quotes
 
 
+def candle_begins():
+    timestamp = int(datetime.now().timestamp())
+    if PERIOD in [5, 10, 15, 30, 60, 120, 180, 300]:
+        if timestamp / PERIOD == timestamp // PERIOD:
+            return True
+    return False
+
+
 def check_values(stack):
+    if not candle_begins():
+        return
     try:
         deposit = driver.find_element(by=By.CSS_SELECTOR, value='body > div.wrapper > div.wrapper__top > header > div.right-block > div.right-block__item.js-drop-down-modal-open > div > div.balance-info-block__data > div.balance-info-block__balance > div')
     except Exception as e:
@@ -163,9 +177,6 @@ def check_values(stack):
         AMOUNTS = get_amounts(float(deposit.text))
 
     if not IS_AMOUNT_SET:
-        if ACTIONS and list(ACTIONS.keys())[-1] + timedelta(seconds=PERIOD + 5) > datetime.now():
-            return
-
         try:
             closed_tab = driver.find_element(by=By.CSS_SELECTOR, value='#bar-chart > div > div > div.right-widget-container > div > div.widget-slot__header > div.divider > ul > li:nth-child(2) > a')
             closed_tab_parent = closed_tab.find_element(by=By.XPATH, value='..')
@@ -184,38 +195,33 @@ def check_values(stack):
                 if '0.00' not in last_split[4]:  # win
                     if amount_value > 1:
                         amount.click()
-                        hand_delay()
-                        driver.find_element(by=By.CSS_SELECTOR, value=base % NUMBERS['1']).click()
+                        driver.find_element(by=By.CSS_SELECTOR, value=base % NUMBERS[str(AMOUNTS[0])]).click()
                         AMOUNTS = get_amounts(float(deposit.text))  # refresh amounts
                 elif '0.00' not in last_split[3]:  # draw
                     pass
                 else:  # lose
                     amount.click()
-                    time.sleep(random.choice([0.6, 0.7, 0.8, 0.9, 1.0, 1.1]))
                     if amount_value in AMOUNTS and AMOUNTS.index(amount_value) + 1 < len(AMOUNTS):
                         next_amount = AMOUNTS[AMOUNTS.index(amount_value) + 1]
                         for number in str(next_amount):
                             driver.find_element(by=By.CSS_SELECTOR, value=base % NUMBERS[number]).click()
-                            hand_delay()
                     else:  # reset to 1
-                        driver.find_element(by=By.CSS_SELECTOR, value=base % NUMBERS['1']).click()
-                        hand_delay()
+                        driver.find_element(by=By.CSS_SELECTOR, value=base % NUMBERS[str(AMOUNTS[0])]).click()
                 closed_tab_parent.click()
             except Exception as e:
                 print(e)
         IS_AMOUNT_SET = True
 
-    if IS_AMOUNT_SET and datetime.now().second % 10 == 0:
+    if IS_AMOUNT_SET:
         quotes = get_quotes(stack, PERIOD)
         psar = indicators.get_parabolic_sar(quotes)
         try:
-            if list(stack.values())[-1] < psar[-1].sar and list(stack.values())[-1 - PERIOD] > psar[-2].sar:
+            if list(stack.values())[-1] < list(stack.values())[-1 - PERIOD]:
                 do_action('put')
-            if list(stack.values())[-1] > psar[-1].sar and list(stack.values())[-1 - PERIOD] < psar[-2].sar:
+            if list(stack.values())[-1] > list(stack.values())[-1 - PERIOD]:
                 do_action('call')
-            print('no PSAR condition, working...:')
-        except:
-            print('wrong PSAR, working...:')
+        except Exception as e:
+            print(e)
 
 
 def websocket_log(stack):
