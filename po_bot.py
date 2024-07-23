@@ -215,10 +215,16 @@ def check_values(stack):
     if IS_AMOUNT_SET:
         quotes = get_quotes(stack, PERIOD)
         psar = indicators.get_parabolic_sar(quotes)
+        macd = indicators.get_macd(quotes)
+        ema2 = indicators.get_ema(quotes, lookback_periods=2)
+        ema7 = indicators.get_ema(quotes, lookback_periods=7)
+        ema12 = indicators.get_ema(quotes, lookback_periods=12)
+        ema19 = indicators.get_ema(quotes, lookback_periods=19)
+        ema45 = indicators.get_ema(quotes, lookback_periods=45)
         try:
-            if list(stack.values())[-1] < list(stack.values())[-1 - PERIOD]:
+            if ema45[-1].ema > ema19[-1].ema > ema12[-1].ema:  # update this
                 do_action('put')
-            if list(stack.values())[-1] > list(stack.values())[-1 - PERIOD]:
+            if ema45[-1].ema < ema19[-1].ema < ema12[-1].ema:  # update this:
                 do_action('call')
         except Exception as e:
             print(e)
