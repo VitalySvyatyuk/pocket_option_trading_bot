@@ -50,7 +50,13 @@ No, my greedy friend. Sometimes, you can have profitable days, but you will lose
 The goal of the bot is to strengthen your Python programming skills, motivating you with the illusory opportunity to get rich.
 
 ### Telegram
-https://t.me/+0xm6ka3O7toxNjdi
+https://t.me/pocketoption_trading_bot
 
 ### Donations
-If you want to thank the author for his amazing work, send your BTC here: `bc1qemxzzy6rq6ycxjn0f00yqgptjqldkms8g2ucu0`
+If you want to thank the author for his amazing work
+buy me a coffee:
+https://buymeacoffee.com/vitaliisviatiuk
+
+or
+
+send your BTC here: `bc1qemxzzy6rq6ycxjn0f00yqgptjqldkms8g2ucu0`
