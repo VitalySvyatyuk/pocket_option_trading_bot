@@ -13,7 +13,7 @@ from utils import get_driver, get_quotes
 
 BASE_URL = 'https://pocketoption.com'  # change if PO is blocked in your country
 PERIOD = 0  # PERIOD on the graph in seconds, one of: 5, 10, 15, 30, 60, 300 etc.
-TIME = 5  # minutes
+TIME = 1  # minutes
 CANDLES = []
 ACTIONS = {}  # dict of {datetime: value} when an action has been made
 MAX_ACTIONS = 1  # how many actions allowed at the period of time
@@ -55,7 +55,7 @@ def do_action(signal):
 
     if action:
         try:
-            print(f"date: {datetime.now().strftime('%H:%M:%S')} do {signal.upper()}, currency: {CURRENCY} last_value: {last_value}")
+            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} {signal.upper()}, currency: {CURRENCY} last_value: {last_value}")
             driver.find_element(by=By.CLASS_NAME, value=f'btn-{signal}').click()
             ACTIONS[datetime.now()] = last_value
             IS_AMOUNT_SET = False
@@ -106,14 +106,14 @@ def check_data():
     model_accuracy = accuracy_score(y_test, y_pred)
     last = pd.DataFrame(get_data(quotes, only_last_row=True), columns=HEADER[:-1])
     probe = model.predict_proba(last)
-    print('Model accuracy:', round(model_accuracy, 1),
-          'PUT probability:', round(probe[0][0], 1),
-          'CALL probability:', round(probe[0][1], 1))
+    print('Model accuracy:', round(model_accuracy, 2),
+          'PUT probability:', round(probe[0][0], 2),
+          'CALL probability:', round(probe[0][1], 2))
 
-    # if model_accuracy > 0.6:
-    if probe[0][0] > 0.7:
+    # if model_accuracy > 0.50:
+    if probe[0][0] > 0.60:
         do_action('put')
-    elif probe[0][1] > 0.7:
+    elif probe[0][1] > 0.60:
         do_action('call')
     else:
         print(quotes[-1].date, 'working...')

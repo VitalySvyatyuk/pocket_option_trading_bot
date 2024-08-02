@@ -99,7 +99,7 @@ def do_action(signal):
 
     if action:
         try:
-            print(f"date: {datetime.now().strftime('%H:%M:%S')} do {signal.upper()}, currency: {CURRENCY} last_value: {last_value}")
+            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} {signal.upper()}, currency: {CURRENCY} last_value: {last_value}")
             driver.find_element(by=By.CLASS_NAME, value=f'btn-{signal}').click()
             ACTIONS[datetime.now()] = last_value
             IS_AMOUNT_SET = False
