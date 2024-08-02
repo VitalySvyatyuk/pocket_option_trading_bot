@@ -73,6 +73,17 @@ def get_data(quotes, only_last_row=False):
     data = []
     for i in range(40, len(quotes), 1):
         try:
+            close = quotes[i].close
+            close_TIME = quotes[i + TIME].close
+        except Exception as e:
+            try:
+                close = float(str(quotes[i].Close).replace(',', '.'))
+                close_TIME = float(str(quotes[i + TIME].Close).replace(',', '.'))
+            except Exception as e:
+                close = None
+                close_TIME = None
+
+        try:
             row = []
             if only_last_row:
                 i = -1
@@ -83,7 +94,7 @@ def get_data(quotes, only_last_row=False):
             row.append(1 if macd[i].macd >= macd[i].signal else 0)
             if only_last_row:
                 return [row]
-            row.append(1 if quotes[i + TIME].close <= quotes[i].close else 0)  # profit
+            row.append(1 if close_TIME <= close else 0)  # profit
             data.append(row)
         except:
             pass

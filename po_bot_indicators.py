@@ -63,10 +63,10 @@ def check_indicators():
 
     if quotes[-1].close < psar[-1].sar and quotes[-2].close > psar[-2].sar:
         do_action('put')
-    if quotes[-1].close > psar[-1].sar and quotes[-2].close < psar[-2].sar:
+    elif quotes[-1].close > psar[-1].sar and quotes[-2].close < psar[-2].sar:
         do_action('call')
-
-    print(quotes[-1].date, 'working...')
+    else:
+        print(quotes[-1].date, 'working...')
 
 
 def websocket_log():

@@ -37,7 +37,7 @@ def get_quotes(candles):
         close = candle[2]
         high = candle[3]
         low = candle[4]
-        if os.name == 'nt':  # windows
+        try:
             quotes.append(Quote(
                 date=datetime.fromtimestamp(candle[0]),
                 open=str(open).replace('.', ','),
@@ -45,8 +45,8 @@ def get_quotes(candles):
                 low=str(low).replace('.', ','),
                 close=str(close).replace('.', ','),
                 volume=None))
-        else:
-             quotes.append(Quote(
+        except ValueError:
+            quotes.append(Quote(
                 date=datetime.fromtimestamp(candle[0]),
                 open=open,
                 high=high,
