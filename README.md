@@ -6,7 +6,9 @@ Download and install .NET6.0 for stock-indicators: https://dotnet.microsoft.com/
 
 `pip3 install -r requirements.txt`
 
-Update a path to the chromedriver in the `utils/get_driver()`.
+Update your paths in the `utils/get_driver()`:
+1. path_default to your Default of the browser on line 16
+2. path_chromedriver to the downloaded chromedriver on line 20
 Chromedriver can be downloaded from here: https://googlechromelabs.github.io/chrome-for-testing/
 
 ### Run
@@ -53,7 +55,8 @@ The goal of the bot is to strengthen your Python programming skills, motivating 
 https://t.me/pocketoption_trading_bot
 
 ### Donations
-If you want to thank the author for his amazing work
+If you want to thank the author for his amazing work:
+
 buy me a coffee:
 https://buymeacoffee.com/vitaliisviatiuk
 

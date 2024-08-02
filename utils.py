@@ -13,10 +13,15 @@ def get_driver():
     options.add_argument('--ignore-ssl-errors')
     options.add_argument('--ignore-certificate-errors')
     options.add_argument('--ignore-certificate-errors-spki-list')
-    options.add_argument(r'--user-data-dir=/Users/vitaly/Library/Application Support/Google/Chrome/Default')
-    # chromedriver can be downloaded from: https://googlechromelabs.github.io/chrome-for-testing/
+    path_default = '/Users/vitaly/Library/Application Support/Google/Chrome/Default'
+    # Windows: path_default = 'C:\Users\Alice\AppData\Local\Google\Chrome\User Data\Default'
+    options.add_argument(fr'--user-data-dir={path_default}')
     try:
-        service = Service(executable_path=r'/Users/vitaly/Downloads/chromedriver-mac-arm64/chromedriver')
+        path_chromedriver = r'/Users/vitaly/Downloads/chromedriver-mac-arm64/chromedriver'
+        # path where you downloaded chromedriver
+        # chromedriver can be downloaded from: https://googlechromelabs.github.io/chrome-for-testing/
+        # Windows: path_chromedriver = r'C:\Users\Alice\Downloads\chromedriver-win64\chromedriver'
+        service = Service(executable_path=path_chromedriver)
         driver = webdriver.Chrome(options=options, service=service)
     except Exception as e:
         service = Service()

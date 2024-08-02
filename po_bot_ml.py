@@ -106,15 +106,17 @@ def check_data():
     model_accuracy = accuracy_score(y_test, y_pred)
     last = pd.DataFrame(get_data(quotes, only_last_row=True), columns=HEADER[:-1])
     probe = model.predict_proba(last)
-    print('Model accuracy:', model_accuracy, 'probe:', probe)
+    print('Model accuracy:', round(model_accuracy, 1),
+          'PUT probability:', round(probe[0][0], 1),
+          'CALL probability:', round(probe[0][1], 1))
 
     # if model_accuracy > 0.6:
     if probe[0][0] > 0.7:
         do_action('put')
-    if probe[0][1] > 0.7:
+    elif probe[0][1] > 0.7:
         do_action('call')
-
-    print(quotes[-1].date, 'working...')
+    else:
+        print(quotes[-1].date, 'working...')
 
 
 def websocket_log():
