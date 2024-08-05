@@ -9,7 +9,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from stock_indicators import indicators
 
-from utils import get_driver, get_quotes
+from utils import get_driver, get_quotes, get_value
 
 BASE_URL = 'https://pocketoption.com'  # change if PO is blocked in your country
 PERIOD = 0  # PERIOD on the graph in seconds, one of: 5, 10, 15, 30, 60, 300 etc.
@@ -73,17 +73,6 @@ def get_data(quotes, only_last_row=False):
     data = []
     for i in range(40, len(quotes), 1):
         try:
-            close = quotes[i].close
-            close_TIME = quotes[i + TIME].close
-        except Exception as e:
-            try:
-                close = float(str(quotes[i].Close).replace(',', '.'))
-                close_TIME = float(str(quotes[i + TIME].Close).replace(',', '.'))
-            except Exception as e:
-                close = None
-                close_TIME = None
-
-        try:
             row = []
             if only_last_row:
                 i = -1
@@ -94,7 +83,7 @@ def get_data(quotes, only_last_row=False):
             row.append(1 if macd[i].macd >= macd[i].signal else 0)
             if only_last_row:
                 return [row]
-            row.append(1 if close_TIME <= close else 0)  # profit
+            row.append(1 if get_value(quotes[i + TIME]) <= get_value(quotes[i]) else 0)  # profit
             data.append(row)
         except:
             pass

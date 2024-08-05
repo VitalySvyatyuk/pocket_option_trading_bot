@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from selenium.webdriver.common.by import By
 from stock_indicators import indicators
 
-from utils import get_driver, get_quotes
+from utils import get_driver, get_quotes, get_value
 
 BASE_URL = 'https://pocketoption.com'  # change if PO is blocked in your country
 PERIOD = 0  # PERIOD on the graph in seconds, one of: 5, 10, 15, 30, 60, 300 etc.
@@ -61,9 +61,9 @@ def check_indicators():
     fractal = indicators.get_fractal(quotes, )
     macd = indicators.get_macd(quotes)
 
-    if quotes[-1].close < psar[-1].sar and quotes[-2].close > psar[-2].sar:
+    if get_value(quotes[-1]) < psar[-1].sar and get_value(quotes[-2]) > psar[-2].sar:
         do_action('put')
-    elif quotes[-1].close > psar[-1].sar and quotes[-2].close < psar[-2].sar:
+    elif get_value(quotes[-1]) > psar[-1].sar and get_value(quotes[-2]) < psar[-2].sar:
         do_action('call')
     else:
         print(quotes[-1].date, 'working...')
