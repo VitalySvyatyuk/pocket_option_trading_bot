@@ -57,4 +57,8 @@ https://buymeacoffee.com/vitaliisviatiuk
 
 or
 
+Patreon: https://www.patreon.com/pocket_option_trading_bot
+
+or
+
 send your BTC here: `bc1qemxzzy6rq6ycxjn0f00yqgptjqldkms8g2ucu0`
