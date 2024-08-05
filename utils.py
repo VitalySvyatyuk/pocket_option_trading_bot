@@ -1,4 +1,5 @@
 import os
+import platform
 from datetime import datetime
 
 from selenium import webdriver
@@ -15,10 +16,17 @@ def get_driver():
     options.add_argument('--ignore-certificate-errors-spki-list')
 
     username = os.environ.get('USER', os.environ.get('USERNAME'))
-    try:
+    os_platform = platform.platform().lower()
+
+    if 'macos' in os_platform:
         path_default = fr'/Users/{username}/Library/Application Support/Google/Chrome/Default'
-    except:  # Windows
+    elif 'windows' in os_platform:
         path_default = fr'C:\Users\{username}\AppData\Local\Google\Chrome\User Data\Default'
+    elif 'linux' in os_platform:
+        path_default = '~/.config/google-chrome/Default'
+    else:
+        path_default = ''
+
     options.add_argument(fr'--user-data-dir={path_default}')
 
     try:
