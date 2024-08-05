@@ -2,14 +2,11 @@
 Bot for autotrade in [Pocket Option](https://pocketoption.com/). Only for Demo mode!
 
 ### Installation
-Download and install .NET6.0 for stock-indicators: https://dotnet.microsoft.com/en-us/download/dotnet/6.0
+Install .NET6.0 or later: https://dotnet.microsoft.com/en-us/download/dotnet/6.0
 
 `pip3 install -r requirements.txt`
 
-Update your paths in the `utils/get_driver()`:
-1. path_default to your Default of the browser on line 16
-2. path_chromedriver to the downloaded chromedriver on line 20
-Chromedriver can be downloaded from here: https://googlechromelabs.github.io/chrome-for-testing/
+Download chromedriver from: https://googlechromelabs.github.io/chrome-for-testing/ . Put chromedriver file to pocket_option_trading_bot folder: `pocket_option_trading_bot\chromedriver` 
 
 ### Run
 `python3 po_bot.py`
