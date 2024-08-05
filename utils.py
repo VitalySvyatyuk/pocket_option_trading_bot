@@ -87,7 +87,7 @@ def get_value(quote, param='close'):
         value = getattr(quote, param)
     except Exception as e:
         try:
-            value = float(str(quote, param.capitalize()).replace(',', '.'))
+            value = float(str(getattr(quote, param.capitalize())).replace(',', '.'))
         except Exception as e:
             return None
     return value
