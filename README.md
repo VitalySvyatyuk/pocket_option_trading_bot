@@ -6,8 +6,6 @@ Install .NET6.0 or later: https://dotnet.microsoft.com/en-us/download/dotnet/6.0
 
 `pip3 install -r requirements.txt`
 
-Download chromedriver from: https://googlechromelabs.github.io/chrome-for-testing/ . Put chromedriver file to pocket_option_trading_bot folder: `pocket_option_trading_bot\chromedriver` 
-
 ### Run
 `python3 po_bot.py`
 or

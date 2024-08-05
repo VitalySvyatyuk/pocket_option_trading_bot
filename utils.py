@@ -29,12 +29,8 @@ def get_driver():
 
     options.add_argument(fr'--user-data-dir={path_default}')
 
-    try:
-        service = Service(executable_path='chromedriver')
-        driver = webdriver.Chrome(options=options, service=service)
-    except Exception as e:
-        service = Service()
-        driver = webdriver.Chrome(options=options, service=service)
+    service = Service()
+    driver = webdriver.Chrome(options=options, service=service)
 
     return driver
 
