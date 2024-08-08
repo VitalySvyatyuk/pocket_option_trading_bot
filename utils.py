@@ -42,15 +42,8 @@ def get_quotes(candles):
         close = candle[2]
         high = candle[3]
         low = candle[4]
+
         try:
-            quotes.append(Quote(
-                date=datetime.fromtimestamp(candle[0]),
-                open=str(open).replace('.', ','),
-                high=str(high).replace('.', ','),
-                low=str(low).replace('.', ','),
-                close=str(close).replace('.', ','),
-                volume=None))
-        except ValueError:
             quotes.append(Quote(
                 date=datetime.fromtimestamp(candle[0]),
                 open=open,
@@ -58,6 +51,15 @@ def get_quotes(candles):
                 low=low,
                 close=close,
                 volume=None))
+        except Exception as e:
+            quotes.append(Quote(
+                date=datetime.fromtimestamp(candle[0]),
+                open=str(open).replace('.', ','),
+                high=str(high).replace('.', ','),
+                low=str(low).replace('.', ','),
+                close=str(close).replace('.', ','),
+                volume=None))
+
     return quotes
 
 
