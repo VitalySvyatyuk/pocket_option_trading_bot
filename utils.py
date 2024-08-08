@@ -51,7 +51,7 @@ def get_quotes(candles):
                 low=low,
                 close=close,
                 volume=None))
-        except Exception as e:
+        except ValueError:  # on Windows and non-en_US locale
             quotes.append(Quote(
                 date=datetime.fromtimestamp(candle[0]),
                 open=str(open).replace('.', ','),

@@ -33,7 +33,7 @@ unwanted signals from previous currencies.
 `po_bot_indicators.py` - script allows you to try different indicators and their combinations. See how an example in `check_indicators()` works and make your updates. Currently, the PSAR strategy is used. Despite using default parameters `acceleration_step=0.02`, `max_acceleration_factor=0.2`, bot's sensitivity is higher, so additional orders appear. Works for 1m and higher timeframes.
 
 ### Pocket Option trading bot with machine learning
-`po_bot_ml.py` - script makes orders based on prediction. Random Forest Classifier approach is used. The prediction is based on the indicators: `supertrend`, `awesome_oscillator`, `PSAR`, `CCI` and `MACD` from the last 200 candles. Bot makes an order when the probability is > 0.60. You can set even higher values (0.70, 0.80, 0.90) in the `check_data()` method. !important! You have to set an order time = TIME param. For example, your `po_bot_ml.py/TIME`=5, then set your order time to 5 minutes. Works for 1m and higher timeframes.
+`po_bot_ml.py` - script makes orders based on prediction. Random Forest Classifier approach is used. The prediction is based on the indicators: `awesome_oscillator`, `PSAR`, `CCI` and `MACD` from the last 200 candles. Bot makes an order when the probability is > 0.60. You can set even higher values (0.70, 0.80, 0.90) in the `check_data()` method. !important! You have to set an order time = TIME param. For example, your `po_bot_ml.py/TIME`=5, then set your order time to 5 minutes. Works for 1m and higher timeframes.
 
 
 ### FAQ

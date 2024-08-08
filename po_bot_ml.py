@@ -76,7 +76,7 @@ def get_data(quotes, only_last_row=False):
             row = []
             if only_last_row:
                 i = -1
-            row.append(1 if supertrend[i].upper_band else 0)
+            # row.append(1 if supertrend[i].upper_band else 0)  # not working on Windows non-en_US locale
             row.append(1 if awesome_oscillator[i].oscillator >= 0 else 0)
             row.append(1 if psar[i].is_reversal else 0)
             row.append(1 if cci[i].cci <= 0 else 0)
