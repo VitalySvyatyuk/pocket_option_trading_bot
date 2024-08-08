@@ -23,7 +23,7 @@ CURRENCY = None
 CURRENCY_CHANGE = False
 CURRENCY_CHANGE_DATE = datetime.now()
 HEADER = [
-    'supertrend',
+    # 'supertrend',
     'awesome_oscillator',
     'psar',
     'cci',
