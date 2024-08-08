@@ -52,19 +52,19 @@ def do_action(signal):
 
 def check_indicators():
     quotes = get_quotes(CANDLES)
-    psar = indicators.get_parabolic_sar(quotes)
-    awesome_oscillator = indicators.get_awesome(quotes, fast_periods=2, slow_periods=34)
-    marubozu = indicators.get_marubozu(quotes)
-    supertrend = indicators.get_super_trend(quotes)
-    sma_long = indicators.get_sma(quotes, lookback_periods=7)
     sma_short = indicators.get_sma(quotes, lookback_periods=3)
-    fractal = indicators.get_fractal(quotes, )
-    macd = indicators.get_macd(quotes)
+    sma_long = indicators.get_sma(quotes, lookback_periods=7)
+    rsi = indicators.get_rsi(quotes)
+    so = indicators.get_stoch(quotes)
 
-    if get_value(quotes[-1]) < psar[-1].sar and get_value(quotes[-2]) > psar[-2].sar:
-        do_action('put')
-    elif get_value(quotes[-1]) > psar[-1].sar and get_value(quotes[-2]) < psar[-2].sar:
-        do_action('call')
+    if sma_short[-2].sma > sma_long[-2].sma and sma_short[-1].sma < sma_long[-1].sma:
+        if rsi[-1].rsi < 50 and any(rsi[-r].rsi > 50 for r in [2, 3, 4, 5]):
+            if so[-1].d < so[-1].k < 80 and any(min(so[-s].d, so[-s].k) > 80 for s in [2, 3, 4, 5]):
+                do_action('put')
+    elif sma_short[-2].sma < sma_long[-2].sma and sma_short[-1].sma > sma_long[-1].sma:
+        if rsi[-1].rsi > 50 and any(rsi[-r].rsi < 50 for r in [2, 3, 4, 5]):
+            if so[-1].d > so[-1].k > 20 and any(max(so[-s].d, so[-s].k) < 20 for s in [2, 3, 4, 5]):
+                do_action('call')
     else:
         print(quotes[-1].date, 'working...')
 
