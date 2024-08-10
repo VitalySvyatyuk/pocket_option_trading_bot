@@ -35,6 +35,11 @@ unwanted signals from previous currencies.
 ### Pocket Option trading bot with machine learning
 `po_bot_ml.py` - script makes orders based on prediction. Random Forest Classifier approach is used. The prediction is based on the indicators: `awesome_oscillator`, `PSAR`, `CCI` and `MACD` from the last 200 candles. Bot makes an order when the probability is > 0.60. You can set even higher values (0.70, 0.80, 0.90) in the `check_data()` method. !important! You have to set an order time = TIME param. For example, your `po_bot_ml.py/TIME`=5, then set your order time to 5 minutes. Works for 1m and higher timeframes.
 
+### Backtest
+
+`test_on_historical_data.py` - here you can backtest strategies of historical data of 1m and 5m timeframes.
+
+
 
 ### FAQ
 `Is it free?`

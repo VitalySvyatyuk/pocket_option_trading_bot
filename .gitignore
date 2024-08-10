@@ -1,6 +1,4 @@
 .idea/
 __pycache__/
 data/
-data_1m/*
-data_5m/*
 default/*
