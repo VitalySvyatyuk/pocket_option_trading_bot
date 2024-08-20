@@ -1,7 +1,9 @@
 import base64
 import json
+import os
 from datetime import datetime, timedelta
 
+import pandas as pd
 from selenium.webdriver.common.by import By
 from stock_indicators import indicators
 
@@ -17,6 +19,7 @@ LAST_REFRESH = datetime.now()
 CURRENCY = None
 CURRENCY_CHANGE = False
 CURRENCY_CHANGE_DATE = datetime.now()
+SAVE_CSV = False
 
 driver = get_driver()
 
@@ -62,7 +65,7 @@ def check_indicators():
         if get_value(quotes[-1]) > get_value(quotes[-2]) > get_value(quotes[-3]):
             do_action('call')
     else:
-        print(quotes[-1].date, 'working...')
+        print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'working...')
 
 
 def websocket_log():
@@ -102,6 +105,16 @@ def websocket_log():
                     if tstamp % PERIOD == 0:
                         if tstamp not in [c[0] for c in CANDLES]:
                             CANDLES.append([tstamp, value, value, value, value])
+                if SAVE_CSV:
+                    asset = data['asset'].replace('_', '').upper()
+                    now = datetime.now()
+                    minutes = data['period'] // 60
+                    directory = f'data_{minutes}m'
+                    os.makedirs(directory, exist_ok=True)
+                    filename = f'{directory}/{asset}_{now.year}_{now.month}_{now.day}_{now.hour}.csv'
+                    df = pd.DataFrame(CANDLES, columns=['timestamp', 'open', 'close', 'high', 'low'])
+                    df.to_csv(filename)
+                    print(f'History file saved: {filename}')
                 print('Got', len(CANDLES), 'candles for', data['asset'])
             try:
                 current_value = data[0][2]

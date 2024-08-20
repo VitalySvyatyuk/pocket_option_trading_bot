@@ -37,7 +37,7 @@ unwanted signals from previous currencies.
 
 ### Backtest
 
-`test_on_historical_data.py` - here you can backtest strategies of historical data of 1m and 5m timeframes.
+`test_on_historical_data.py` - here you can backtest strategies on historical data of 1m and 5m timeframes. To create your own history files, set `SAVE_CSV` to `True` in `po_bot_indicators.py`.
 
 
 
