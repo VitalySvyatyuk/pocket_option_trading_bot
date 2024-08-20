@@ -35,15 +35,27 @@ def get_quotes(filename):
         csv_reader = csv.reader(csv_file, delimiter=',')
         for row in csv_reader:
             try:
+                timestamp = datetime.fromtimestamp(float(row[1]))
+            except ValueError:  # pass header
+                continue
+            try:
                 quotes.append(Quote(
-                    date=datetime.fromtimestamp(float(row[1])),
+                    date=timestamp,
                     open=row[2],
-                    close=row[3],
                     high=row[4],
                     low=row[5],
+                    close=row[3],
                     volume=None))
-            except:
-                pass
+            except ValueError:  # on Windows and non-en_US locale
+                quotes.append(Quote(
+                    date=timestamp,
+                    open=str(row[2]).replace('.', ','),
+                    high=str(row[4]).replace('.', ','),
+                    low=str(row[5]).replace('.', ','),
+                    close=str(row[3]).replace('.', ','),
+                    volume=None))
+            except Exception as e:
+                print(e)
     return quotes
 
 
