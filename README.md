@@ -4,9 +4,17 @@ Bot for autotrade in [Pocket Option](https://pocketoption.com/). Only for Demo m
 ### Installation
 Install .NET6.0 or later: https://dotnet.microsoft.com/en-us/download/dotnet/6.0
 
-`pip3 install -r requirements.txt`
+For Windows users: download and install last Python version from here: https://www.python.org/downloads/
+
+Download a project from Github by clicking `Code` -> `Download zip`, unzip the project.
+
+Open a terminal (Mac and Linux users) or cmd terminal on Windows. Inside of terminal, go to the folder with a project you unzipped.
+
+Type `pip3 install -r requirements.txt` to install dependencies.
 
 ### Run
+by staying in the terminal with the project folder opened, type:
+
 `python3 po_bot.py`
 or
 
