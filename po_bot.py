@@ -113,16 +113,20 @@ def hand_delay():
 
 
 def get_amounts(amount):
-    if amount > 1999:
-        amount = 1999
+    if amount > 20000:
+        amount = 20000
     amounts = []
     while True:
         amount = int(amount / MARTINGALE_COEFFICIENT)
         amounts.insert(0, amount)
         if amounts[0] <= 1:
             amounts[0] = 1
-            print('Amounts:', amounts, 'init deposit:', INIT_DEPOSIT)
+            print('Martingale stack:', amounts, 'init deposit:', INIT_DEPOSIT)
             return amounts
+
+
+def get_deposit_value(deposit):
+    return float(deposit.text.replace(',', ''))
 
 
 def check_values(stack):
@@ -131,13 +135,17 @@ def check_values(stack):
     except Exception as e:
         print(e)
 
+    time_style = driver.find_element(by=By.CSS_SELECTOR, value='#put-call-buttons-chart-1 > div > div.blocks-wrap > div.block.block--expiration-inputs > div.block__control.control > div.control-buttons__wrapper > div > a > div > div > svg')
+    if 'exp-mode-2.svg' in time_style.get_attribute('data-src'):  # should be 'exp-mode-2.svg'
+        time_style.click()  # switch time style
+
     global IS_AMOUNT_SET, AMOUNTS, INIT_DEPOSIT
 
     if not INIT_DEPOSIT:
-        INIT_DEPOSIT = float(deposit.text)
+        INIT_DEPOSIT = get_deposit_value(deposit)
 
     if not AMOUNTS:  # only for init purpose
-        AMOUNTS = get_amounts(float(deposit.text))
+        AMOUNTS = get_amounts(get_deposit_value(deposit))
 
     if not IS_AMOUNT_SET:
         if ACTIONS and list(ACTIONS.keys())[-1] + timedelta(seconds=PERIOD + 5) > datetime.now():
@@ -151,19 +159,19 @@ def check_values(stack):
         except:
             pass
 
-        closed_trades_currencies = driver.find_elements(by=By.CLASS_NAME, value='deals-list__item')
-        if closed_trades_currencies:
-            last_split = closed_trades_currencies[0].text.split('\n')
+        closed_trades = driver.find_elements(by=By.CLASS_NAME, value='deals-list__item')
+        if closed_trades:
+            last_split = closed_trades[0].text.split('\n')
             try:
                 amount = driver.find_element(by=By.CSS_SELECTOR, value='#put-call-buttons-chart-1 > div > div.blocks-wrap > div.block.block--bet-amount > div.block__control.control > div.control__value.value.value--several-items > div > input[type=text]')
-                amount_value = int(amount.get_attribute('value')[1:])
-                base = '#modal-root > div > div > div > div > div.trading-panel-modal__in > div.virtual-keyboard.js-virtual-keyboard > div > div:nth-child(%s) > div'
+                amount_value = int(amount.get_attribute('value'))
+                base = '#modal-root > div > div > div > div > div.trading-panel-modal__in > div.virtual-keyboard > div > div:nth-child(%s) > div'
                 if '$0' != last_split[4]:  # win
                     if amount_value > 1:
                         amount.click()
                         hand_delay()
                         driver.find_element(by=By.CSS_SELECTOR, value=base % NUMBERS['1']).click()
-                        AMOUNTS = get_amounts(float(deposit.text))  # refresh amounts
+                        AMOUNTS = get_amounts(get_deposit_value(deposit))  # refresh amounts
                 elif '$0' != last_split[3]:  # draw
                     pass
                 else:  # lose
