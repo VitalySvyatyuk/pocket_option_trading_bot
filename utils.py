@@ -14,6 +14,7 @@ def get_driver():
     options.add_argument('--ignore-ssl-errors')
     options.add_argument('--ignore-certificate-errors')
     options.add_argument('--ignore-certificate-errors-spki-list')
+    # options.add_argument('--headless=new')
 
     username = os.environ.get('USER', os.environ.get('USERNAME'))
     os_platform = platform.platform().lower()

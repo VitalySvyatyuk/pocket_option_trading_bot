@@ -113,6 +113,7 @@ def hand_delay():
 
 
 def get_amounts(amount):
+    # return [1, 3, 8, 22, 54, 120, 260, 550, 1150, 2370, 4810, 9000]
     if amount > 20000:
         amount = 20000
     amounts = []
@@ -164,7 +165,7 @@ def check_values(stack):
             last_split = closed_trades[0].text.split('\n')
             try:
                 amount = driver.find_element(by=By.CSS_SELECTOR, value='#put-call-buttons-chart-1 > div > div.blocks-wrap > div.block.block--bet-amount > div.block__control.control > div.control__value.value.value--several-items > div > input[type=text]')
-                amount_value = int(amount.get_attribute('value'))
+                amount_value = int(amount.get_attribute('value').replace(',', ''))
                 base = '#modal-root > div > div > div > div > div.trading-panel-modal__in > div.virtual-keyboard > div > div:nth-child(%s) > div'
                 if '$0' != last_split[4]:  # win
                     if amount_value > 1:
@@ -191,10 +192,10 @@ def check_values(stack):
         IS_AMOUNT_SET = True
 
     if IS_AMOUNT_SET and datetime.now().second % 10 == 0:
-
-        if list(stack.values())[-1] < list(stack.values())[-1 - PERIOD] < list(stack.values())[-1 - PERIOD * 2]:
+        values = list(stack.values())
+        if values[-1] < values[-1 - PERIOD] < values[-1 - PERIOD * 2]:
             do_action('put')
-        if list(stack.values())[-1] > list(stack.values())[-1 - PERIOD] > list(stack.values())[-1 - PERIOD * 2]:
+        if values[-1] > values[-1 - PERIOD] > values[-1 - PERIOD * 2]:
             do_action('call')
 
 
