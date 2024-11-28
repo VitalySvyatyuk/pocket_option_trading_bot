@@ -61,11 +61,12 @@ No, my greedy friend. Sometimes, you can have profitable days, but you will lose
 `What's the purpose of the Bot then?`
 The goal of the bot is to strengthen your Python programming skills, motivating you with the illusory opportunity to get rich.
 
-### Not registered on Pocket Option yet? Here is the link
-[Register here](https://pocket1.click/register?utm_campaign=806509&utm_source=affiliate&utm_medium=sr&a=ovlztqbPkiBiOt&ac=github)
+### Links
+[Pocket Option registration link](https://pocket1.click/register?utm_campaign=806509&utm_source=affiliate&utm_medium=sr&a=ovlztqbPkiBiOt&ac=github)
 
-### Telegram
-https://t.me/pocketoption_trading_bot
+[Telegram](https://t.me/pocketoption_trading_bot)
+
+[YouTube](https://www.youtube.com/channel/UCfVo7aRwQ0M0EV6LeC7R5Gw)
 
 ### Donations
 If you want to thank the author for his amazing work:
