@@ -1,18 +1,8 @@
 # Pocket Option Trading Bot
 Bot for autotrade in [Pocket Option](https://pocket1.click/register?utm_campaign=806509&utm_source=affiliate&utm_medium=sr&a=ovlztqbPkiBiOt&ac=github)
 
-### Installation
-For Windows users: download and install actual Python version from here: https://www.python.org/downloads/
-
-Download a project from GitHub by clicking `Code` -> `Download zip`, Right click on a zip file -> Extract all. Then Shift + right click on unzipped folder -> open in PowerShell.
-
-Type `pip3 install -r requirements.txt` to install dependencies.
-
-### Run
-by staying in the terminal with the project folder opened, type:
-
-`python3 po_bot.py`
-to run default trading bot for Windows users
+### Download
+For Windows users download bot there: https://drive.google.com/file/d/1FRq9xtiIZkE404ScpyBFgj2GoUjwmKOI
 
 ### Run other bots
 `python3 po_bot_indicators.py`
