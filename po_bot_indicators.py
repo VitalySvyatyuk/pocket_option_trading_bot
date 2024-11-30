@@ -20,7 +20,7 @@ LAST_REFRESH = datetime.now()
 CURRENCY = None
 CURRENCY_CHANGE = False
 CURRENCY_CHANGE_DATE = datetime.now()
-SAVE_CSV = False
+SAVE_CSV = True
 
 driver = get_driver()
 
