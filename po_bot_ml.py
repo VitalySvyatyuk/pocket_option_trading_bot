@@ -9,7 +9,8 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from stock_indicators import indicators
 
-from utils import get_driver, get_quotes, get_value
+from driver import get_driver
+from utils import get_quotes, get_value
 
 BASE_URL = 'https://pocketoption.com'  # change if PO is blocked in your country
 PERIOD = 0  # PERIOD on the graph in seconds, one of: 5, 10, 15, 30, 60, 300 etc.
@@ -24,6 +25,8 @@ CURRENCY_CHANGE = False
 CURRENCY_CHANGE_DATE = datetime.now()
 HEADER = [
     # 'supertrend',
+    'emalong',
+    # 'emashort',
     'awesome_oscillator',
     'psar',
     'cci',
@@ -55,7 +58,8 @@ def do_action(signal):
 
     if action:
         try:
-            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} {signal.upper()}, currency: {CURRENCY} last_value: {last_value}")
+            print(
+                f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} {signal.upper()}, currency: {CURRENCY} last_value: {last_value}")
             driver.find_element(by=By.CLASS_NAME, value=f'btn-{signal}').click()
             ACTIONS[datetime.now()] = last_value
             IS_AMOUNT_SET = False
@@ -65,6 +69,8 @@ def do_action(signal):
 
 def get_data(quotes, only_last_row=False):
     supertrend = indicators.get_super_trend(quotes)
+    emalong = indicators.get_ema(quotes, lookback_periods=8)
+    emashort = indicators.get_ema(quotes, lookback_periods=3)
     awesome_oscillator = indicators.get_awesome(quotes)
     psar = indicators.get_parabolic_sar(quotes)
     cci = indicators.get_cci(quotes)
@@ -76,7 +82,11 @@ def get_data(quotes, only_last_row=False):
             row = []
             if only_last_row:
                 i = -1
-            # row.append(1 if supertrend[i].upper_band else 0)  # not working on Windows non-en_US locale
+                # row.append(1 if supertrend[i].upper_band else 0)  # not working on Windows non-en_US locale
+            row.append(1 if emashort[-2].ema > emalong[-2].ema and emashort[-1].ema < emalong[-1].ema and get_value(
+                quotes[-1]) < get_value(quotes[-2]) < get_value(quotes[-3]) else 0)
+            # row.append(0 if emashort[-2].ema < emalong[-2].ema and emashort[-1].ema > emalong[-1].ema and get_value(
+            #     quotes[-1]) > get_value(quotes[-2]) > get_value(quotes[-3]) else 1)
             row.append(1 if awesome_oscillator[i].oscillator >= 0 else 0)
             row.append(1 if psar[i].is_reversal else 0)
             row.append(1 if cci[i].cci <= 0 else 0)
@@ -84,10 +94,11 @@ def get_data(quotes, only_last_row=False):
             if only_last_row:
                 return [row]
             row.append(1 if get_value(quotes[i + TIME]) <= get_value(quotes[i]) else 0)  # profit
+            # print(f"Row length: {len(row)}")
             data.append(row)
         except:
             pass
-
+    print('len data', len(data))
     return data
 
 

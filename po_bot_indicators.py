@@ -7,7 +7,8 @@ import pandas as pd
 from selenium.webdriver.common.by import By
 from stock_indicators import indicators
 
-from utils import get_driver, get_quotes, get_value
+from driver import get_driver
+from utils import get_quotes, get_value
 
 BASE_URL = 'https://pocketoption.com'  # change if PO is blocked in your country
 PERIOD = 0  # PERIOD on the graph in seconds, one of: 5, 10, 15, 30, 60, 300 etc.
