@@ -2,7 +2,7 @@
 Bot for autotrade in [Pocket Option](https://pocket1.click/register?utm_campaign=806509&utm_source=affiliate&utm_medium=sr&a=ovlztqbPkiBiOt&ac=github)
 
 ### Download
-For Windows users download bot there: https://drive.google.com/file/d/1FRq9xtiIZkE404ScpyBFgj2GoUjwmKOI
+[Bot for Windows](https://drive.google.com/file/d/1FRq9xtiIZkE404ScpyBFgj2GoUjwmKOI) password: Password
 
 ### Run other bots
 `python3 po_bot_indicators.py`
