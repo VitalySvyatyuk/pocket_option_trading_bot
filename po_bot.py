@@ -167,13 +167,13 @@ def check_values(stack):
                 amount = driver.find_element(by=By.CSS_SELECTOR, value='#put-call-buttons-chart-1 > div > div.blocks-wrap > div.block.block--bet-amount > div.block__control.control > div.control__value.value.value--several-items > div > input[type=text]')
                 amount_value = int(amount.get_attribute('value').replace(',', ''))
                 base = '#modal-root > div > div > div > div > div.trading-panel-modal__in > div.virtual-keyboard > div > div:nth-child(%s) > div'
-                if '$0' != last_split[4]:  # win
+                if '$\u202f0' != last_split[4]:  # win
                     if amount_value > 1:
                         amount.click()
                         hand_delay()
                         driver.find_element(by=By.CSS_SELECTOR, value=base % NUMBERS['1']).click()
                         AMOUNTS = get_amounts(get_deposit_value(deposit))  # refresh amounts
-                elif '$0' != last_split[3]:  # draw
+                elif '$\u202f0' != last_split[3]:  # draw
                     pass
                 else:  # lose
                     amount.click()

@@ -1,5 +1,5 @@
 # Pocket Option Trading Bot
-Bot for autotrade in [Pocket Option](https://pocket1.click/register?utm_campaign=806509&utm_source=affiliate&utm_medium=sr&a=ovlztqbPkiBiOt&ac=github)
+Bot for autotrade in [Pocket Option](https://pocket2.click/register?utm_campaign=806509&utm_source=affiliate&utm_medium=sr&a=ovlztqbPkiBiOt&ac=github)
 
 ### Download
 [Bot for Windows](https://drive.google.com/file/d/1FRq9xtiIZkE404ScpyBFgj2GoUjwmKOI) password: Password
@@ -50,7 +50,7 @@ No, my greedy friend. Sometimes, you can have profitable days, but you will lose
 The goal of the bot is to strengthen your Python programming skills, motivating you with the illusory opportunity to get rich.
 
 ### Links
-[Pocket Option registration link](https://pocket1.click/register?utm_campaign=806509&utm_source=affiliate&utm_medium=sr&a=ovlztqbPkiBiOt&ac=github)
+[Pocket Option registration link](https://pocket2.click/register?utm_campaign=806509&utm_source=affiliate&utm_medium=sr&a=ovlztqbPkiBiOt&ac=github)
 
 [Telegram](https://t.me/pocketoption_trading_bot)
 
