@@ -2,7 +2,16 @@
 Bot for autotrade in [Pocket Option](https://pocket2.click/register?utm_campaign=806509&utm_source=affiliate&utm_medium=sr&a=ovlztqbPkiBiOt&ac=github)
 
 ### Download
-[Bot for Windows](https://drive.google.com/file/d/1HKR8EAxBOhgNHXcpf1gPG-2pgcmbQUmz) password: Password
+[Bot for Windows v2 (current)](https://drive.google.com/file/d/1NnOpoKeE08Q-oMSzpQ-VZ2h4i7ZtHAVB) password: Password
+
+[Bot for Windows v1 (outdated)](https://drive.google.com/file/d/1HKR8EAxBOhgNHXcpf1gPG-2pgcmbQUmz) password: Password
+
+### What's new in v2
+- allowed multiple assets
+- all timeframes allowed
+- added visual interface for options
+- it works faster now, no screen reloading required
+- it's possible to set minimal payout
 
 ### Run other bots
 `python3 po_bot_indicators.py`
