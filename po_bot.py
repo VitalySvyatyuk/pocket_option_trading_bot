@@ -8,7 +8,6 @@ from selenium.webdriver.common.by import By
 
 from driver import companies, get_driver
 
-BASE_URL = 'https://pocketoption.com'  # change if PO is blocked in your country
 LENGTH_STACK_MIN = 460
 LENGTH_STACK_MAX = 1000  # 4000
 PERIOD = 60  # PERIOD on the graph
@@ -53,7 +52,7 @@ driver = get_driver()
 
 
 def load_web_driver():
-    url = f'{BASE_URL}/en/cabinet/demo-quick-high-low/'
+    url = 'https://u.shortink.io/cabinet/demo-quick-high-low?utm_campaign=806509&utm_source=affiliate&utm_medium=sr&a=ovlztqbPkiBiOt&ac=github'
     driver.get(url)
 
 
@@ -167,13 +166,13 @@ def check_values(stack):
                 amount = driver.find_element(by=By.CSS_SELECTOR, value='#put-call-buttons-chart-1 > div > div.blocks-wrap > div.block.block--bet-amount > div.block__control.control > div.control__value.value.value--several-items > div > input[type=text]')
                 amount_value = int(amount.get_attribute('value').replace(',', ''))
                 base = '#modal-root > div > div > div > div > div.trading-panel-modal__in > div.virtual-keyboard > div > div:nth-child(%s) > div'
-                if '$\u202f0' != last_split[4]:  # win
+                if '$0' != last_split[4] and '$\u202f0' != last_split[4]:  # win
                     if amount_value > 1:
                         amount.click()
                         hand_delay()
                         driver.find_element(by=By.CSS_SELECTOR, value=base % NUMBERS['1']).click()
                         AMOUNTS = get_amounts(get_deposit_value(deposit))  # refresh amounts
-                elif '$\u202f0' != last_split[3]:  # draw
+                elif '$0' != last_split[3] and '$\u202f0' != last_split[3]:  # draw
                     pass
                 else:  # lose
                     amount.click()
