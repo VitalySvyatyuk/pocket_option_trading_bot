@@ -2,9 +2,9 @@
 Bot for autotrade in [Pocket Option](https://pocket2.click/register?utm_campaign=806509&utm_source=affiliate&utm_medium=sr&a=ovlztqbPkiBiOt&ac=github)
 
 ### Download
-[Bot for Windows v2 (current)](https://drive.google.com/file/d/1NnOpoKeE08Q-oMSzpQ-VZ2h4i7ZtHAVB) password: Password
+[Bot for Windows v2](https://drive.google.com/file/d/1NnOpoKeE08Q-oMSzpQ-VZ2h4i7ZtHAVB) password: Password
 
-[Bot for Windows v1 (outdated)](https://drive.google.com/file/d/1HKR8EAxBOhgNHXcpf1gPG-2pgcmbQUmz) password: Password
+[Bot for Windows v1](https://drive.google.com/file/d/1RiNGyNvrSooTqOWVv6vj9GKtWupOtfMs) password: Password
 
 ### What's new in v2
 - allowed multiple assets
