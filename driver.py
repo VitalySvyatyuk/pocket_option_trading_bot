@@ -1,13 +1,11 @@
 import os
 import platform
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
+import undetected_chromedriver as uc
 
 
 def get_driver():
-    options = Options()
+    options = uc.ChromeOptions()
     options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
     options.add_argument('--ignore-ssl-errors')
     options.add_argument('--ignore-certificate-errors')
@@ -25,13 +23,11 @@ def get_driver():
         path_default = '~/.config/google-chrome/Default'
     else:
         path_default = ''
-
     options.add_argument(fr'--user-data-dir={path_default}')
 
-    service = Service()
-    driver = webdriver.Chrome(options=options, service=service)
-
+    driver = uc.Chrome(options=options)
     return driver
+
 
 companies = {
     'Apple OTC': '#AAPL_otc',
