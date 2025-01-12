@@ -12,6 +12,7 @@ Bot for autotrade in [Pocket Option](https://pocket2.click/register?utm_campaign
 - added visual interface for options
 - it works faster now, no screen reloading required
 - it's possible to set minimal payout
+- improved Martingale, you can set a list of amounts yourself
 
 ### Run other bots
 `python3 po_bot_indicators.py`
@@ -50,13 +51,16 @@ Only for Mac, Linux, .NET6.0 or newer required: https://dotnet.microsoft.com/en-
 
 ### FAQ
 `Is it free?`
-Yes, the bot is fully free and you can use it without any payments.
+Version 1 is fully free and you can use it without any payments. Version 2 is paid.
 
 `Is it profitable?`
-No, my greedy friend. Sometimes, you can have profitable days, but you will lose all your money in the long run.
+With Version 1 you can have profitable days sometimes, but you will lose all your money in the long run. Version 2 can be profitable depending on your configuration.
 
 `What's the purpose of the Bot then?`
 The goal of the bot is to strengthen your Python programming skills, motivating you with the illusory opportunity to get rich.
+
+`Where the source code for Version 2?`
+Source code for version 2 isn't available for now, but maybe I will publish it later.
 
 ### Links
 [Pocket Option registration link](https://pocket2.click/register?utm_campaign=806509&utm_source=affiliate&utm_medium=sr&a=ovlztqbPkiBiOt&ac=github)
