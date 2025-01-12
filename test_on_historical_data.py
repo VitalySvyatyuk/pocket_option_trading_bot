@@ -1,7 +1,8 @@
 import csv
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
+import yfinance as yf
 from stock_indicators import indicators
 from stock_indicators.indicators.common.enums import Match
 from stock_indicators.indicators.common.quote import Quote
@@ -59,6 +60,23 @@ def get_quotes(filename):
     return quotes
 
 
+def get_quotes_yfinance(asset):
+    end_date = str((datetime.now() - timedelta(days=1)).date())
+    start_date = str((datetime.now() - timedelta(days=8)).date())
+    downloaded_data = yf.download(asset, start=start_date, end=end_date, interval='1m')
+    quotes = []
+    for i, row in downloaded_data.iterrows():
+        quotes.append(Quote(
+            date=datetime.strptime(str(i)[:19], '%Y-%m-%d %H:%M:%S'),
+            open=row['Open'].values[0],
+            high=row['High'].values[0],
+            low=row['Low'].values[0],
+            close=row['Close'].values[0],
+            volume=None)
+        )
+    return quotes
+
+
 def check_indicators(quotes):
     sma_short = indicators.get_sma(quotes, lookback_periods=3)
     sma_long = indicators.get_sma(quotes, lookback_periods=8)
@@ -113,10 +131,14 @@ def main():
     all_draws = 0
     all_loses = 0
 
-    for csv_file in csv_files:
-        quotes = get_quotes(csv_file)
+    # for csv_file in csv_files:
+    #     quotes = get_quotes(csv_file)
+
+    for asset in ['AUDUSD=X']:  # 'AUDUSD=X', 'EURUSD=X', 'AUDCAD=X', 'EURCHF=X', 'CADCHF=X', 'AUDCHF=X', 'EURAUD=X', 'EURGBP=X', 'EURJPY=X'
+        quotes = get_quotes_yfinance(asset)
+
         orders, wins, draws, loses = check_indicators(quotes)
-        print(csv_file, 'Orders:', orders, 'Wins:', wins, 'Loses:', loses, 'Win percent:', round(wins * 100 / orders, 2), '%')
+        # print(csv_file, 'Orders:', orders, 'Wins:', wins, 'Loses:', loses, 'Win percent:', round(wins * 100 / orders, 2), '%')
 
         all_orders += orders
         all_wins += wins
