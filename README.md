@@ -47,7 +47,7 @@ Only for Mac, Linux, .NET6.0 or newer required: https://dotnet.microsoft.com/en-
 Only for Mac, Linux, .NET6.0 or newer required: https://dotnet.microsoft.com/en-us/download/dotnet/6.0
 
 ### Backtest
-`test_on_historical_data.py` - here you can backtest strategies on historical data of 1m and 5m timeframes. To create your own history files, set `SAVE_CSV` to `True` in `po_bot_indicators.py`.
+`test_on_historical_data.py` - here you can backtest strategies on historical data of 1m and 5m timeframes. To create your own history files, set `SAVE_CSV` to `True` in `po_bot_indicators.py`. Or you can use any non-OTC assets available in yfinance to get history data.
 
 ### FAQ
 `Is it free?`
