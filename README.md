@@ -1,5 +1,5 @@
 # Pocket Option Trading Bot
-Bot for autotrade in [Pocket Option](https://pocket2.click/register?utm_campaign=806509&utm_source=affiliate&utm_medium=sr&a=ovlztqbPkiBiOt&ac=github)
+## [Pocket Option](https://pocket2.click/register?utm_campaign=806509&utm_source=affiliate&utm_medium=sr&a=ovlztqbPkiBiOt&ac=github) robot
 
 ### Download
 [Bot for Windows v2](https://drive.google.com/file/d/1NnOpoKeE08Q-oMSzpQ-VZ2h4i7ZtHAVB) password: Password
@@ -77,8 +77,17 @@ https://buymeacoffee.com/vitaliisviatiuk
 
 or
 
-Patreon: https://www.patreon.com/pocket_option_trading_bot
-
-or
-
 send your BTC here: `bc1qemxzzy6rq6ycxjn0f00yqgptjqldkms8g2ucu0`
+
+### Keywords
+- торговый бот для pocket option
+- бот для pocket option
+- бот для торговли на pocket option
+- телеграм бот сигналы для трейдинга pocket option
+- купить бот для заработка pocket option
+- бот для pocket option бесплатно
+- pocket option robot
+- pocket option robot скачать
+- pocket option robot стратегии
+- pocket option robot скачать бесплатно
+- pocket option robot лучшая стратегия
