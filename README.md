@@ -13,9 +13,11 @@
 - it works faster now, no screen reloading required
 - it's possible to set minimal payout
 - you may set take profit and stop loss
+- you may invert Call and Put with Vice Versa feature
 - improved Martingale, you can set a list of amounts yourself
 - backtest! You may backtest your strategy and see the approximate profit and frequency on historical data
 - EXPERIMENTAL. Server strategies added. They generated on a server every day based on data from the previous 7 days. See example below.
+
 ![Server Strategies Example](server_strategies.png)
 
 
