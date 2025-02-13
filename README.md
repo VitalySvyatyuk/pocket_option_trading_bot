@@ -12,7 +12,13 @@
 - added visual interface for options
 - it works faster now, no screen reloading required
 - it's possible to set minimal payout
+- you may set take profit and stop loss
 - improved Martingale, you can set a list of amounts yourself
+- backtest! You may backtest your strategy and see the approximate profit and frequency on historical data
+- EXPERIMENTAL. Server strategies added. They generated on a server every day based on data from the previous 7 days. See example below.
+![Server Strategies Example](server_strategies.png)
+
+
 
 ### Run other bots
 `python3 po_bot_indicators.py`
