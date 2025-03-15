@@ -32,10 +32,6 @@ to run trading bot with Machine Learning for prediction (only Mac and Linux user
 `python3 test_on_historical_data.py`
 to test your strategies on historical data (only Mac and Linux users)
 
-### After authorization:
-- set timeframe as `1 min`
-- set time as `1 min`
-
 ### Information
 Bot connects to websocket and receives signals every half a second from PO.
 To make it more convenient, I simplify data to 1 second so that to use seconds
@@ -44,6 +40,7 @@ unwanted signals from previous currencies.
 
 ### Pocket Option trading bot Martingale
 `po_bot.py` - Martingale trading. The default strategy is pretty simple. If the previous candles are red, the bot makes 'put' order. And 'call' otherwise. You can see a current Martingale stack in the console (Martingale stack). For example, Martingale stack [1, 3, 7, 15, 31, 62, 124, 249, 499, 999] means that if you order $1 and lose, the next order will be $3, then $7, and so on. You can change `MARTINGALE_COEFFICIENT`.
+!Important. Your timeframe always must be >= estimation. For example, if your timeframe is 10s, your estimation can't be 11s and higher.
 
 ### Pocket Option trading bot v2
 `po_bot_v2.py` - the last version of the trading bot with all features.

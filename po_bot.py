@@ -10,15 +10,11 @@ from driver import companies, get_driver
 
 LENGTH_STACK_MIN = 460
 LENGTH_STACK_MAX = 1000  # 4000
-PERIOD = 60  # PERIOD on the graph
-TIME = 1  # quotes
-SMA_LONG = 50
-SMA_SHORT = 8
-PERCENTAGE = 0.91  # create orders more than PERCENTAGE
+PERIOD = 0  # PERIOD on the graph
 STACK = {}  # {1687021970: 0.87, 1687021971: 0.88}
 ACTIONS = {}  # dict of {datetime: value} when an action has been made
 MAX_ACTIONS = 1
-ACTIONS_SECONDS = PERIOD - 1  # how long action still in ACTIONS
+ACTIONS_SECONDS = 10  # how long action still in ACTIONS
 LAST_REFRESH = datetime.now()
 CURRENCY = None
 CURRENCY_CHANGE = False
@@ -199,7 +195,8 @@ def check_values(stack):
 
 
 def websocket_log(stack):
-    global CURRENCY, CURRENCY_CHANGE, CURRENCY_CHANGE_DATE, LAST_REFRESH, HISTORY_TAKEN, MODEL, INIT_DEPOSIT
+    global CURRENCY, CURRENCY_CHANGE, CURRENCY_CHANGE_DATE, LAST_REFRESH, HISTORY_TAKEN, MODEL, INIT_DEPOSIT, PERIOD, \
+        ACTIONS_SECONDS
     try:
         current_symbol = driver.find_element(by=By.CLASS_NAME, value='current-symbol').text
         if current_symbol != CURRENCY:
@@ -225,6 +222,8 @@ def websocket_log(stack):
             data = json.loads(payload_str)
             if not HISTORY_TAKEN:
                 if 'history' in data:
+                    PERIOD = data['period']
+                    ACTIONS_SECONDS = PERIOD - 1
                     stack = {int(d[0]): d[1] for d in data['history']}
                     print(f"History taken for asset: {data['asset']}, period: {data['period']}, len_history: {len(data['history'])}, len_stack: {len(stack)}")
             try:
