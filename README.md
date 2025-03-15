@@ -53,7 +53,7 @@ unwanted signals from previous currencies.
 Only for Mac, Linux, .NET6.0 or newer required: https://dotnet.microsoft.com/en-us/download/dotnet/6.0
 
 ### Pocket Option trading bot with machine learning
-`po_bot_ml.py` - script makes orders based on prediction. Random Forest Classifier approach is used. The prediction is based on the indicators: `awesome_oscillator`, `PSAR`, `CCI` and `MACD` from the last 100 candles. Bot makes an order when the probability is > 0.60. You can set even higher values (0.70, 0.80, 0.90) in the `check_data()` method. !important! You have to set an order time = TIME param. For example, your `po_bot_ml.py/TIME`=5, then set your estimation to 5 candles. Another example, your timeframe is 30m, and your estimation is 1h, so set TIME=2. The bot makes a prediction only for PUT action. And if probability < 30%, then CALL action fires. Works for 1m and higher timeframes. 
+`po_bot_ml.py` - script makes orders based on prediction. Random Forest Classifier approach is used. The prediction is based on the indicators: `awesome_oscillator`, `PSAR`, `CCI` and `MACD` from the last 100 candles. Bot makes an order when the probability is > 0.60. You can set even higher values (0.70, 0.80, 0.90) in the `check_data()` method. !important! You have to set estimation = TIME param. For example, if your `po_bot_ml.py/TIME`=5, then set your estimation to 5 candles. Another example, your timeframe is 30m, and your estimation is 1h, so set TIME=2. The bot makes a prediction only for PUT action. And if probability < 30%, then CALL action fires. Works for 1m and higher timeframes. 
 Only for Mac, Linux, .NET6.0 or newer required: https://dotnet.microsoft.com/en-us/download/dotnet/6.0
 
 ### Backtest
