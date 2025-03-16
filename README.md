@@ -8,8 +8,8 @@
 ### What's new in v2
 - allowed multiple assets
 - all timeframes allowed
-- added visual interface for options
-- it works faster now, no screen reloading required
+- added visual interface to setup your trading strategy
+- it works faster now (async), no screen reloading required
 - it's possible to set minimal payout
 - you may set take profit and stop loss
 - you may invert Call and Put with Vice Versa feature
@@ -55,13 +55,14 @@ Only for Mac, Linux, .NET6.0 or newer required: https://dotnet.microsoft.com/en-
 
 ### Backtest
 `test_on_historical_data.py` - here you can backtest strategies on historical data of 1m and 5m timeframes. To create your own history files, set `SAVE_CSV` to `True` in `po_bot_indicators.py`. Or you can use any non-OTC assets available in yfinance to get history data.
+Also, backtest is a feature in v2.
 
 ### FAQ
 `Is it free?`
-Version 1 is fully free and you can use it without any payments. Version 2 is paid.
+Version 1 is fully free, and you can use it without any payments. Version 2 is paid with 10 free trades every day as a trial.
 
 `Is it profitable?`
-With Version 1 you can have profitable days sometimes, but you will lose all your money in the long run. Version 2 can be profitable depending on your configuration.
+Sometimes you will have profitable days. But you should always remember that 95% of traders lose in trading. And you are most likely one of them. No bot and no signals work in the long run.
 
 `What's the purpose of the Bot then?`
 The goal of the bot is to strengthen your Python programming skills, motivating you with the illusory opportunity to get rich.
@@ -75,8 +76,7 @@ The goal of the bot is to strengthen your Python programming skills, motivating 
 [YouTube](https://www.youtube.com/channel/UCfVo7aRwQ0M0EV6LeC7R5Gw)
 
 ### Donations
-If you want to thank the author for his work, buy me a coffee:
-https://buymeacoffee.com/vitaliisviatiuk
+If you want to thank the author for his work, [buy me a coffee](https://buymeacoffee.com/vitaliisviatiuk).
 
 ### Keywords
 - торговый бот для pocket option
