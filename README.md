@@ -5,6 +5,8 @@
 
 [Download Bot v1 for Windows](https://drive.google.com/file/d/1RiNGyNvrSooTqOWVv6vj9GKtWupOtfMs) password: Password
 
+I always recommend trying a product before buying. The trial version of the product allowed us to do this. After the trial version, I recommend trying the product in demo mode.
+
 ### What's new in v2
 - allowed multiple assets
 - all timeframes allowed
