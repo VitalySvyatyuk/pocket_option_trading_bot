@@ -169,7 +169,7 @@ async def websocket_log(driver):
                 LICENSE_VALID = True
                 log(f"License valid, {response.json()['license_days']} days left, trading...")
                 if SETTINGS.get('BACKTEST'):
-                    await backtest(email)
+                    await backtest(email, timeframe=SETTINGS['BACKTEST_TIMEFRAME'][:-1])
             else:
                 LICENSE_VALID = False
                 log('Invalid license, only 10 trades allowed...')
@@ -625,7 +625,7 @@ async def check_strategies(candles, sstrategy=None):
     
 
 async def get_candles_yfinance(email, asset, timeframe):
-    response = requests.get(CANDLES_URL, params={'asset': asset, 'email': email})  # TODO: update user email
+    response = requests.get(CANDLES_URL, params={'asset': asset, 'email': email, 'timeframe': timeframe})  # TODO: update user email
     if response.status_code != 200:
         raise Exception(response.json()['error'])
     candles = [['', '', c] for c in response.json()[asset]]  # ['', '', val] to fit into strategies where 'close' is [2]
@@ -633,7 +633,7 @@ async def get_candles_yfinance(email, asset, timeframe):
     return candles
 
 
-async def backtest(email, timeframe='1m'):
+async def backtest(email, timeframe):  # 1m, 2m, 3m, 5m, 10m, 15m, 30m, 60m
     assets = requests.get(ASSETS_URL, params={'email': email})
     if assets.status_code != 200:
         log(assets.json()['error'])
@@ -645,10 +645,10 @@ async def backtest(email, timeframe='1m'):
         try:
             candles = await get_candles_yfinance(email, asset, timeframe=timeframe)
         except:
-            log(f'Backtest on {asset} with {timeframe} timeframe! No candles available, try later.')
+            log(f'Backtest on {asset} with {timeframe}min timeframe! No candles available, try later.')
             continue
         if not candles:
-            log(f'Backtest on {asset} with {timeframe} timeframe! No candles available, try later.')
+            log(f'Backtest on {asset} with {timeframe}min timeframe! No candles available, try later.')
             continue
 
         size = max(SETTINGS['SLOW_MA'], SETTINGS['RSI_PERIOD']) + 11
@@ -662,7 +662,7 @@ async def backtest(email, timeframe='1m'):
                 actions[i] = action
         # print('Actions:', len(actions))
         per = int(len(candles) / len(actions))
-        log(f'Backtest on {asset} with {timeframe} timeframe! Frequency: 1 order per {per} candles. ')
+        log(f'Backtest on last {len(candles)} candles for {asset} with {timeframe}min timeframe! Frequency: 1 order per {per} candles. ')
         for estimation in [1, 2, 3]:  # candles
             wins = 0
             draws = 0
@@ -757,7 +757,7 @@ def tkinter_run():
     global window
     window = Tk()
     window.geometry('550x250')
-    window.title('Pocket Option Trading Bot v2.8')
+    window.title('Pocket Option Trading Bot v2.10')
     read_settings()
 
     def enable_rsi():
@@ -889,10 +889,15 @@ def tkinter_run():
             ent_mar.config(state='disabled')
 
     chk_back = IntVar()
-    chk_backtest = Checkbutton(window, text='Backtest', variable=chk_back, justify='left', anchor='w')
+    chk_backtest = Checkbutton(window, text='Backtest for', variable=chk_back, justify='left', anchor='w')
     if SETTINGS.get('BACKTEST', False) is True:
         chk_backtest.select()
     chk_backtest.grid(column=2, row=7, sticky=W)
+
+    backtest_timeframe = StringVar(window)
+    backtest_timeframe.set(SETTINGS.get('BACKTEST_TIMEFRAME', '1m'))
+    backtest_option = OptionMenu(window, backtest_timeframe, '1m', '2m', '3m', '5m', '10m', '15m', '30m', '60m')
+    backtest_option.grid(column=2, row=7, sticky=E)
 
 
     chk_serv = IntVar()  # server strategies
@@ -977,6 +982,7 @@ def tkinter_run():
             STOP_LOSS_ENABLED=True if chk_stop_lo.get() else False,
             STOP_LOSS=stop_loss_val.get() if chk_stop_lo.get() else SETTINGS.get('STOP_LOSS', 50),
             USE_SERVER_STRATEGIES=True if chk_serv.get() else False,
+            BACKTEST_TIMEFRAME=backtest_timeframe.get(),
         )
         window.destroy()
         return
