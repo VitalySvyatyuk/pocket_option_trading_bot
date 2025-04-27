@@ -181,8 +181,8 @@ async def websocket_log(driver):
                     TRADING_ALLOWED = False
                     log(f'Max daily trades reached. To continue, buy a license: {LICENSE_BUY_URL}{email}')
                     driver.get(f'{LICENSE_BUY_URL}{email}')
-        except:
-            pass
+        except Exception as e:
+            print(e)
 
     if SETTINGS.get('USE_SERVER_STRATEGIES') and not SERVER_STRATEGIES:
         response = requests.get(SERVER_STRATEGIES_URL)
@@ -625,7 +625,7 @@ async def check_strategies(candles, sstrategy=None):
     
 
 async def get_candles_yfinance(email, asset, timeframe):
-    response = requests.get(CANDLES_URL, params={'asset': asset, 'email': email, 'timeframe': timeframe})  # TODO: update user email
+    response = requests.get(CANDLES_URL, params={'asset': asset, 'email': email, 'timeframe': timeframe})
     if response.status_code != 200:
         raise Exception(response.json()['error'])
     candles = [['', '', c] for c in response.json()[asset]]  # ['', '', val] to fit into strategies where 'close' is [2]
@@ -633,7 +633,7 @@ async def get_candles_yfinance(email, asset, timeframe):
     return candles
 
 
-async def backtest(email, timeframe):  # 1m, 2m, 3m, 5m, 10m, 15m, 30m, 60m
+async def backtest(email, timeframe='1m'):  # 1m, 2m, 3m, 5m, 10m, 15m, 30m, 60m
     assets = requests.get(ASSETS_URL, params={'email': email})
     if assets.status_code != 200:
         log(assets.json()['error'])
@@ -661,7 +661,10 @@ async def backtest(email, timeframe):  # 1m, 2m, 3m, 5m, 10m, 15m, 30m, 60m
                     action = 'call' if action == 'put' else 'put'
                 actions[i] = action
         # print('Actions:', len(actions))
-        per = int(len(candles) / len(actions))
+        try:
+            per = int(len(candles) / len(actions))
+        except ZeroDivisionError:
+            per = ''
         log(f'Backtest on last {len(candles)} candles for {asset} with {timeframe}min timeframe! Frequency: 1 order per {per} candles. ')
         for estimation in [1, 2, 3]:  # candles
             wins = 0
@@ -977,12 +980,12 @@ def tkinter_run():
             RSI_UPPER=rsi_upper_val.get() if chk_rsi_var.get() else SETTINGS.get('RSI_UPPER', 70),
             RSI_CALL_SIGN=rsi_upper_sign.get() if chk_rsi_var.get() else SETTINGS.get('RSI_CALL_SIGN', '>'),
             BACKTEST=True if chk_back.get() else False,
+            BACKTEST_TIMEFRAME=backtest_timeframe.get(),
             TAKE_PROFIT_ENABLED=True if chk_take_prof.get() else False,
             TAKE_PROFIT=take_profit_val.get() if chk_take_prof.get() else SETTINGS.get('TAKE_PROFIT', 100),
             STOP_LOSS_ENABLED=True if chk_stop_lo.get() else False,
             STOP_LOSS=stop_loss_val.get() if chk_stop_lo.get() else SETTINGS.get('STOP_LOSS', 50),
             USE_SERVER_STRATEGIES=True if chk_serv.get() else False,
-            BACKTEST_TIMEFRAME=backtest_timeframe.get(),
         )
         window.destroy()
         return
