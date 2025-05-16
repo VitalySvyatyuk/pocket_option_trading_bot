@@ -69,6 +69,7 @@ async def get_driver():
     options.add_argument('--ignore-ssl-errors')
     options.add_argument('--ignore-certificate-errors')
     options.add_argument('--ignore-certificate-errors-spki-list')
+    options.add_argument('--disable-build-check')
     # options.add_argument('--headless=new')
 
     username = os.environ.get('USER', os.environ.get('USERNAME'))
@@ -760,7 +761,7 @@ def tkinter_run():
     global window
     window = Tk()
     window.geometry('550x250')
-    window.title('Pocket Option Trading Bot v2.10')
+    window.title('Pocket Option Trading Bot v2.11')
     read_settings()
 
     def enable_rsi():
