@@ -621,12 +621,12 @@ async def check_strategies(candles, sstrategy=None):
     # action = await get_price_action(candles, action)
     # if not action:
     #     return  # secret ingredient
-    
+
     return action
     
 
 async def get_candles_yfinance(email, asset, timeframe):
-    response = requests.get(CANDLES_URL, params={'asset': asset, 'email': email, 'timeframe': timeframe})
+    response = requests.get(CANDLES_URL, params={'asset': asset, 'email': email, 'timeframe': timeframe, 'size': 10000})
     if response.status_code != 200:
         raise Exception(response.json()['error'])
     candles = [['', '', c] for c in response.json()[asset]]  # ['', '', val] to fit into strategies where 'close' is [2]
@@ -642,7 +642,7 @@ async def backtest(email, timeframe='1m'):  # 1m, 2m, 3m, 5m, 10m, 15m, 30m, 60m
 
     PROFITS = []
     for asset in assets.json()['assets']:
-        await asyncio.sleep(0.7)
+        await asyncio.sleep(0.6)
         try:
             candles = await get_candles_yfinance(email, asset, timeframe=timeframe)
         except:
@@ -655,7 +655,7 @@ async def backtest(email, timeframe='1m'):  # 1m, 2m, 3m, 5m, 10m, 15m, 30m, 60m
         size = max(SETTINGS['SLOW_MA'], SETTINGS['RSI_PERIOD']) + 11
         actions = {}
         for i in range(size, len(candles) + 1):
-            candles_part = candles[i-size:i]
+            candles_part = candles[i-size:i+1]
             action = await check_strategies(candles_part)
             if action:
                 if SETTINGS['VICE_VERSA']:
