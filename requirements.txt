@@ -1,6 +1,7 @@
-pandas==2.1.4
-scikit-learn==1.4.0
-selenium==4.16.0
-# stock-indicators==1.1.0
-undetected-chromedriver==3.5.5
-
+pandas
+requests
+#scikit-learn
+selenium
+setuptools
+#stock-indicators
+undetected-chromedriver
