@@ -6,6 +6,7 @@ import os
 import platform
 import random
 import sys
+import winreg
 from datetime import datetime, timedelta
 from tkinter import *
 
@@ -61,6 +62,25 @@ NUMBERS = {
 INITIAL_DEPOSIT = None
 SETTINGS_PATH = 'settings.txt'
 SERVER_STRATEGIES = {}
+
+
+async def set_remote_debugging_allowed():
+    key_path = r"SOFTWARE\Policies\Google\Chrome"
+    value_name = "RemoteDebuggingAllowed"
+    try:
+        key = winreg.CreateKeyEx(
+            winreg.HKEY_LOCAL_MACHINE,
+            key_path,
+            0,
+            winreg.KEY_SET_VALUE | winreg.KEY_QUERY_VALUE | winreg.KEY_WOW64_64KEY
+        )
+        current_value, regtype = winreg.QueryValueEx(key, value_name)
+        if current_value != 1:
+            winreg.SetValueEx(key, value_name, 0, winreg.REG_DWORD, 1)
+            log(f"Set RemoteDebuggingAllowed to 1 in regedit")
+        winreg.CloseKey(key)
+    except Exception as e:
+        pass
 
 
 async def get_driver():
@@ -692,6 +712,7 @@ async def backtest(email, timeframe='1m'):  # 1m, 2m, 3m, 5m, 10m, 15m, 30m, 60m
 
 
 async def main():
+    await set_remote_debugging_allowed()
     driver = await get_driver()
     driver.get(URL)
     while True:
