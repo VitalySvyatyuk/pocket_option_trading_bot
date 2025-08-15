@@ -1,11 +1,8 @@
 # Pocket Option Trading Bot
-## [Pocket Option](https://pocket2.click/register?utm_campaign=806509&utm_source=affiliate&utm_medium=sr&a=ovlztqbPkiBiOt&ac=github) robot
 
 [Download Bot v2 for Windows](https://drive.google.com/file/d/1NnOpoKeE08Q-oMSzpQ-VZ2h4i7ZtHAVB) password: Password
 
 [Download Bot v1 for Windows](https://drive.google.com/file/d/1RiNGyNvrSooTqOWVv6vj9GKtWupOtfMs) password: Password
-
-I always recommend trying a product before buying. The trial version of the product allowed us to do this. After the trial version, I recommend trying the product in demo mode.
 
 ### What's new in v2
 - allowed multiple assets
@@ -64,31 +61,10 @@ Also, backtest is a feature in v2.
 Version 1 is fully free, and you can use it without any payments. Version 2 is paid with 10 free trades every day as a trial.
 
 `Is it profitable?`
-Sometimes you will have profitable days. But you should always remember that 95% of traders lose in trading. And you are most likely one of them. No bot and no signals work in the long run.
-
-`What's the purpose of the Bot then?`
-The goal of the bot is to strengthen your Python programming skills, motivating you with the illusory opportunity to get rich.
-
+No.
 
 ### Links
-[Pocket Option registration link](https://pocket2.click/register?utm_campaign=806509&utm_source=affiliate&utm_medium=sr&a=ovlztqbPkiBiOt&ac=github)
-
-[Telegram](https://t.me/pocketoption_trading_bot)
-
 [YouTube](https://www.youtube.com/channel/UCfVo7aRwQ0M0EV6LeC7R5Gw)
 
 ### Donations
 If you want to thank the author for his work, [buy me a coffee](https://buymeacoffee.com/vitaliisviatiuk).
-
-### Keywords
-- торговый бот для pocket option
-- бот для pocket option
-- бот для торговли на pocket option
-- телеграм бот сигналы для трейдинга pocket option
-- купить бот для заработка pocket option
-- бот для pocket option бесплатно
-- pocket option robot
-- pocket option robot скачать
-- pocket option robot стратегии
-- pocket option robot скачать бесплатно
-- pocket option robot лучшая стратегия
