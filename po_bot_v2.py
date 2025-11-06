@@ -505,6 +505,12 @@ async def hand_delay():
 async def check_indicators(driver):
     global MARTINGALE_LAST_ACTION_ENDS_AT, MARTINGALE_AMOUNT_SET, MARTINGALE_INITIAL
 
+    if SETTINGS.get('BEGINNING_CANDLE_ORDER'):
+        # check is it the beginning of the candle
+        now = datetime.now()
+        if (now.hour * 3600 + now.minute * 60 + now.second) % PERIOD != 0:
+            return  # and if it's not, return
+
     MARTINGALE_LIST = SETTINGS.get('MARTINGALE_LIST')
     base = '#modal-root > div > div > div > div > div.trading-panel-modal__in > div.virtual-keyboard > div > div:nth-child(%s) > div'
     if SETTINGS.get('MARTINGALE_ENABLED') and MARTINGALE_INITIAL:  # set initial Martingale
@@ -784,8 +790,8 @@ def save_settings(**kwargs):
 def tkinter_run():
     global window
     window = Tk()
-    window.geometry('550x250')
-    window.title('Pocket Option Trading Bot v2.12')
+    window.geometry('550x270')
+    window.title('Pocket Option Trading Bot v2.13')
     read_settings()
 
     def enable_rsi():
@@ -934,6 +940,12 @@ def tkinter_run():
         chk_server.select()
     chk_server.grid(column=2, row=8, sticky=W)
 
+    chk_begin = IntVar()  # beginning of the candle order
+    chk_beginning = Checkbutton(window, text='Beginning candle order', variable=chk_begin, justify='left', anchor='w')
+    if SETTINGS.get('BEGINNING_CANDLE_ORDER', False) is True:
+        chk_beginning.select()
+    chk_beginning.grid(column=2, row=9, sticky=W)
+
     Label(window, text='   ').grid(column=3, row=0)  # DIVIDER
 
     Label(window, text='Martingale').grid(column=4, row=0)
@@ -1011,6 +1023,7 @@ def tkinter_run():
             STOP_LOSS_ENABLED=True if chk_stop_lo.get() else False,
             STOP_LOSS=stop_loss_val.get() if chk_stop_lo.get() else SETTINGS.get('STOP_LOSS', 50),
             USE_SERVER_STRATEGIES=True if chk_serv.get() else False,
+            BEGINNING_CANDLE_ORDER=True if chk_begin.get() else False,
         )
         window.destroy()
         return
