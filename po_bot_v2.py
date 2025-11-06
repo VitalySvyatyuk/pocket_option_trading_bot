@@ -6,7 +6,6 @@ import os
 import platform
 import random
 import sys
-import winreg
 from datetime import datetime, timedelta
 from tkinter import *
 
@@ -65,6 +64,10 @@ SERVER_STRATEGIES = {}
 
 
 async def set_remote_debugging_allowed():
+    os_platform = platform.platform().lower()
+    if 'windows' not in os_platform:
+        return  # use only for Windows
+    import winreg
     key_path = r"SOFTWARE\Policies\Google\Chrome"
     value_name = "RemoteDebuggingAllowed"
     try:
