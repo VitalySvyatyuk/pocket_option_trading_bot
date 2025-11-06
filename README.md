@@ -1,4 +1,4 @@
-# Pocket Option Trading Bot
+# [Pocket Option Trading Bot](https://pocket2.click/register?utm_campaign=806509&utm_source=affiliate&utm_medium=sr&a=ovlztqbPkiBiOt&ac=github)
 
 [Download Bot v2 for Windows](https://drive.google.com/file/d/1NnOpoKeE08Q-oMSzpQ-VZ2h4i7ZtHAVB) password: Password
 
@@ -61,9 +61,13 @@ Also, backtest is a feature in v2.
 Version 1 is fully free, and you can use it without any payments. Version 2 is paid with 10 free trades every day as a trial.
 
 `Is it profitable?`
-No.
+Sometimes.
 
 ### Links
+[Pocket Option registration link](https://pocket2.click/register?utm_campaign=806509&utm_source=affiliate&utm_medium=sr&a=ovlztqbPkiBiOt&ac=github)
+
+[Telegram](https://t.me/pocketoption_trading_bot)
+
 [YouTube](https://www.youtube.com/channel/UCfVo7aRwQ0M0EV6LeC7R5Gw)
 
 ### Donations
