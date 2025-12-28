@@ -27,7 +27,7 @@ CANDLES_URL = f'{BASE_URL}/close_candles/'
 LIMIT_TRADES_URL = f'{BASE_URL}/limit_trades/'
 SERVER_STRATEGIES_URL = f'{BASE_URL}/server_strategies/'
 PRODUCT_ID = 'prod_RWzyaFqdRawZim'  # 'test_00g15N2kf5IcgGk6oo'
-LICENSE_BUY_URL = 'https://buy.stripe.com/3cs9Dw3W8dMT2u44gg?prefilled_email='
+LICENSE_BUY_URL = 'https://buy.stripe.com/6oU5kE6I6fjQfz83o31Nu01?prefilled_email='
 PERIOD = 1  # default is 1
 ASSETS = {}
 CANDLES = {}
