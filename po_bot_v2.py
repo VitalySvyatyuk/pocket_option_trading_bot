@@ -512,7 +512,7 @@ async def check_indicators(driver):
             return  # and if it's not, return
 
     MARTINGALE_LIST = SETTINGS.get('MARTINGALE_LIST')
-    base = '#modal-root > div > div > div > div > div.trading-panel-modal__in > div.virtual-keyboard > div > div:nth-child(%s) > div'
+    base = '#modal-root > div > div > div > div > div > div:nth-child(2) > div.panel-collapse__body > div > div > div:nth-child(%s) > div'
     if SETTINGS.get('MARTINGALE_ENABLED') and MARTINGALE_INITIAL:  # set initial Martingale
         try:
             await set_amount_icon(driver)
@@ -791,7 +791,7 @@ def tkinter_run():
     global window
     window = Tk()
     window.geometry('550x270')
-    window.title('Pocket Option Trading Bot v2.13')
+    window.title('Pocket Option Trading Bot v2.15')
     read_settings()
 
     def enable_rsi():
