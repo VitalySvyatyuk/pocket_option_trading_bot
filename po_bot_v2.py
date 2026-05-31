@@ -107,7 +107,7 @@ async def get_driver():
     else:
         path_default = ''
     options.add_argument(fr'--user-data-dir={path_default}')
-    driver = uc.Chrome(options=options)
+    driver = uc.Chrome(options=options, version_main=148)
     return driver
 
 
@@ -791,7 +791,7 @@ def tkinter_run():
     global window
     window = Tk()
     window.geometry('550x270')
-    window.title('Pocket Option Trading Bot v2.15')
+    window.title('Pocket Option Trading Bot v2.16')
     read_settings()
 
     def enable_rsi():
