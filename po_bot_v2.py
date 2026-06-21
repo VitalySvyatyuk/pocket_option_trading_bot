@@ -598,8 +598,26 @@ async def check_deposit(driver):
             TRADING_ALLOWED = False
 
 
+async def psar_strategy(candles, sstrategy=None):
+    quotes = candles_to_quotes(candles)
+    results = indicators.get_parabolic_sar(quotes)
+    last = results[-1] if results else None
+    if last is None or not last.is_reversal:
+        return None
+    close = candles[-1][2]
+    if last.sar < close:
+        return 'call'
+    elif last.sar > close:
+        return 'put'
+    return None
+
+
 async def check_strategies(candles, sstrategy=None):
-    action = await moving_averages_cross(candles, sstrategy=sstrategy)
+    strategy = sstrategy.get('strategy', 1) if sstrategy else SETTINGS.get('STRATEGY', 1)
+    if strategy == 2:
+        action = await psar_strategy(candles, sstrategy=sstrategy)
+    else:
+        action = await moving_averages_cross(candles, sstrategy=sstrategy)
     if not action:
         return
 
@@ -758,7 +776,7 @@ def save_settings(**kwargs):
 def tkinter_run():
     global window
     window = Tk()
-    window.geometry('550x300')
+    window.geometry('550x320')
     window.title('Pocket Option Trading Bot v2.17')
     read_settings()
 
@@ -789,10 +807,12 @@ def tkinter_run():
             pass
 
     radio_var = IntVar()
-    radio_var.set(1)
-    Label(window, text='Strategies').grid(column=0, row=0)  # TODO: add hover info
+    radio_var.set(SETTINGS.get('STRATEGY', 1))
+    Label(window, text='Strategies').grid(column=0, row=0)
     Radiobutton(window, text='Moving Averages Crossing', variable=radio_var, value=1, justify='left', anchor='w').grid(
-        column=0, row=3, sticky=W)  # after adding another strategy, add selected strategy to settings
+        column=0, row=3, sticky=W)
+    Radiobutton(window, text='Parabolic SAR', variable=radio_var, value=2, justify='left', anchor='w').grid(
+        column=0, row=6, sticky=W)
 
     lbl_fast_ma = Label(window, text='Fast', justify='left')
     lbl_fast_ma.grid(column=0, row=4, sticky=W)
@@ -818,53 +838,53 @@ def tkinter_run():
     chk_rsi = Checkbutton(window, text='RSI', variable=chk_rsi_var, justify='left', anchor='w', command=enable_rsi)
     if SETTINGS.get('RSI_ENABLED', False) is True:
         chk_rsi.select()
-    chk_rsi.grid(column=0, row=6, sticky=W)
+    chk_rsi.grid(column=0, row=7, sticky=W)
     rsi_period_val = IntVar(value=SETTINGS.get('RSI_PERIOD', 14))
     ent_rsi_period = Entry(window, width=2, justify='right', textvariable=rsi_period_val)
     ent_rsi_period.config(state='normal' if chk_rsi_var.get() else 'disabled')
-    ent_rsi_period.grid(column=0, row=6, sticky=E)
+    ent_rsi_period.grid(column=0, row=7, sticky=E)
     lbl_rsi_period = Label(window, text='period')
     lbl_rsi_period.config(state='normal' if chk_rsi_var.get() else 'disabled')
-    lbl_rsi_period.grid(column=0, row=6)
+    lbl_rsi_period.grid(column=0, row=7)
     lbl_rsi_call = Label(window, text='Call if RSI', justify='left')
     lbl_rsi_call.config(state='normal' if chk_rsi_var.get() else 'disabled')
-    lbl_rsi_call.grid(column=0, row=7, sticky=W)
+    lbl_rsi_call.grid(column=0, row=8, sticky=W)
     rsi_upper_sign = StringVar(window)
     rsi_upper_sign.set(SETTINGS.get('RSI_CALL_SIGN', '>'))
     rsi_upper_drop = OptionMenu(window, rsi_upper_sign, '>', '<')
     rsi_upper_drop.config(state='normal' if chk_rsi_var.get() else 'disabled', disabledforeground='black')
-    rsi_upper_drop.grid(column=0, row=7)
+    rsi_upper_drop.grid(column=0, row=8)
     rsi_upper_sign.trace_add('write', set_rsi_lower_sign)
     rsi_upper_val = IntVar(value=SETTINGS.get('RSI_UPPER', 70))
     ent_rsi_upper = Entry(window, width=2, justify='right', textvariable=rsi_upper_val)
     ent_rsi_upper.config(state='normal' if chk_rsi_var.get() else 'disabled')
-    ent_rsi_upper.grid(column=0, row=7, sticky=E)
+    ent_rsi_upper.grid(column=0, row=8, sticky=E)
     rsi_upper_val.trace_add('write', set_rsi_lower)
     lbl_rsi_put = Label(window, text='Put if RSI', justify='left')
     lbl_rsi_put.config(state='normal' if chk_rsi_var.get() else 'disabled')
-    lbl_rsi_put.grid(column=0, row=8, sticky=W)
+    lbl_rsi_put.grid(column=0, row=9, sticky=W)
     rsi_lower_sign = StringVar(window)
     rsi_lower_sign.set(get_rsi_put_sign(SETTINGS.get('RSI_CALL_SIGN', '>')))
     rsi_lower_drop = OptionMenu(window, rsi_lower_sign, '>', '<')
     rsi_lower_drop.config(state='disabled', disabledforeground='black')
-    rsi_lower_drop.grid(column=0, row=8)
+    rsi_lower_drop.grid(column=0, row=9)
     rsi_lower_val = IntVar(value=get_rsi_lower(int(SETTINGS.get('RSI_UPPER', 70))))
     ent_rsi_lower = Entry(window, width=2, justify='right', textvariable=rsi_lower_val, state='disabled')
-    ent_rsi_lower.grid(column=0, row=8, sticky=E)
+    ent_rsi_lower.grid(column=0, row=9, sticky=E)
 
     chk_supertrend_var = IntVar()
     chk_supertrend = Checkbutton(window, text='Supertrend', variable=chk_supertrend_var, justify='left', anchor='w',
                                  command=enable_supertrend)
     if SETTINGS.get('SUPERTREND_ENABLED', False) is True:
         chk_supertrend.select()
-    chk_supertrend.grid(column=0, row=9, sticky=W)
+    chk_supertrend.grid(column=0, row=10, sticky=W)
     lbl_supertrend_period = Label(window, text='Period', justify='left')
     lbl_supertrend_period.config(state='normal' if chk_supertrend_var.get() else 'disabled')
-    lbl_supertrend_period.grid(column=0, row=10, sticky=W)
+    lbl_supertrend_period.grid(column=0, row=11, sticky=W)
     supertrend_period_val = IntVar(value=SETTINGS.get('SUPERTREND_PERIOD', 10))
     ent_supertrend_period = Entry(window, width=2, justify='right', textvariable=supertrend_period_val)
     ent_supertrend_period.config(state='normal' if chk_supertrend_var.get() else 'disabled')
-    ent_supertrend_period.grid(column=0, row=10, sticky=E)
+    ent_supertrend_period.grid(column=0, row=11, sticky=E)
 
     Label(window, text='   ').grid(column=1, row=0)  # DIVIDER
 
@@ -1001,6 +1021,7 @@ def tkinter_run():
             error_variable.set('Chrome version: should be number 80-999')
             return
         save_settings(
+            STRATEGY=radio_var.get(),
             FAST_MA=int(ent_fast_ma.get()),
             FAST_MA_TYPE=fast_ma_type.get(),
             SLOW_MA=int(ent_slow_ma.get()),
@@ -1019,7 +1040,7 @@ def tkinter_run():
             TAKE_PROFIT=take_profit_val.get() if chk_take_prof.get() else SETTINGS.get('TAKE_PROFIT', 100),
             STOP_LOSS_ENABLED=True if chk_stop_lo.get() else False,
             STOP_LOSS=stop_loss_val.get() if chk_stop_lo.get() else SETTINGS.get('STOP_LOSS', 50),
-            USE_SERVER_STRATEGIES=True if chk_serv.get() else False,
+            USE_SERVER_STRATEGIES=SETTINGS.get('USE_SERVER_STRATEGIES', False),
             BEGINNING_CANDLE_ORDER=True if chk_begin.get() else False,
             SUPERTREND_ENABLED=True if chk_supertrend_var.get() else False,
             SUPERTREND_PERIOD=supertrend_period_val.get() if chk_supertrend_var.get() else SETTINGS.get('SUPERTREND_PERIOD', 10),
