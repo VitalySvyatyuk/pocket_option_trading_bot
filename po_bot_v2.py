@@ -12,6 +12,7 @@ from tkinter import *
 import requests
 from selenium.common.exceptions import ElementNotInteractableException, NoSuchElementException
 from selenium.webdriver.common.by import By
+from stock_indicators import indicators, Match, Quote
 import undetected_chromedriver as uc
 
 ops = {
@@ -330,27 +331,31 @@ async def create_order(driver, action, asset, sstrategy=None):
     return True
 
 
-async def calculate_last_wma(candles, period):
-    if len(candles) < period:
-        raise ValueError('Not enough data points to calculate WMA.')
+def candles_to_quotes(candles):
+    base_date = datetime(2000, 1, 1)
+    quotes = []
+    for i, c in enumerate(candles):
+        close = c[2]
+        open_ = c[1] if isinstance(c[1], (int, float)) else close
+        high = c[3] if len(c) > 3 and isinstance(c[3], (int, float)) else close
+        low = c[4] if len(c) > 4 and isinstance(c[4], (int, float)) else close
+        quotes.append(Quote(base_date + timedelta(minutes=i), open_, high, low, close))
+    return quotes
 
-    weights = list(range(1, period + 1))  # Create weights [1, 2, ..., period]
-    weighted_prices = [candles[i] * weights[i] for i in range(-period, 0)]  # Multiply prices by weights
 
-    return sum(weighted_prices) / sum(weights)  # WMA formula
-
-
-async def calculate_last_ema(candles, period, multiplier):
-    if len(candles) < period:
-        raise ValueError("Not enough data points to calculate EMA.")
-
-    sma = sum(candles[:period]) / period  # Initial SMA as first EMA
-    ema = sma
-
-    for price in candles[period:]:
-        ema = (price - ema) * multiplier + ema  # EMA formula
-
-    return ema
+def get_ma_last_two(quotes, ma_type, period):
+    if ma_type == 'EMA':
+        results = indicators.get_ema(quotes, period)
+        values = [r.ema for r in results if r.ema is not None]
+    elif ma_type == 'WMA':
+        results = indicators.get_wma(quotes, period)
+        values = [r.wma for r in results if r.wma is not None]
+    else:  # SMA
+        results = indicators.get_sma(quotes, period)
+        values = [r.sma for r in results if r.sma is not None]
+    if len(values) < 2:
+        raise ValueError("Not enough data points to calculate MA.")
+    return values[-2], values[-1]
 
 
 async def moving_averages_cross(candles, sstrategy=None):
@@ -358,38 +363,19 @@ async def moving_averages_cross(candles, sstrategy=None):
     fast_ma_type = sstrategy['fast_ma_type'] if sstrategy else SETTINGS.get('FAST_MA_TYPE', 'SMA')
     slow_ma = sstrategy['slow_ma'] if sstrategy else SETTINGS['SLOW_MA']
     slow_ma_type = sstrategy['slow_ma_type'] if sstrategy else SETTINGS.get('SLOW_MA_TYPE', 'SMA')
-    candles = [c[2] for c in candles]
 
     if fast_ma >= slow_ma:
         log("Moving averages 'fast' can't be bigger than 'slow'")
         return None
 
-    if fast_ma_type == 'EMA':
-        multiplier = 2 / (fast_ma + 1)
-        fast_ma_previous = await calculate_last_ema(candles[-fast_ma-10:-1], fast_ma, multiplier)
-        fast_ma_current = (candles[-1] - fast_ma_previous) * multiplier + fast_ma_previous
-    elif fast_ma_type == 'WMA':
-        fast_ma_previous = await calculate_last_wma(candles[-fast_ma-10:-1], fast_ma)
-        fast_ma_current = await calculate_last_wma(candles[-fast_ma-9:], fast_ma)
-    else:  # SMA
-        fast_ma_previous = sum([c for c in candles[-fast_ma-1:-1]]) / fast_ma
-        fast_ma_current = sum([c for c in candles[-fast_ma:]]) / fast_ma
-
-    if slow_ma_type == 'EMA':
-        multiplier = 2 / (slow_ma + 1)
-        slow_ma_previous = await calculate_last_ema(candles[-slow_ma-10:-1], slow_ma, multiplier)
-        slow_ma_current = (candles[-1] - slow_ma_previous) * multiplier + slow_ma_previous
-    elif slow_ma_type == 'WMA':
-        slow_ma_previous = await calculate_last_wma(candles[-slow_ma-10:-1], slow_ma)
-        slow_ma_current = await calculate_last_wma(candles[-slow_ma-9:], slow_ma)
-    else:  # SMA
-        slow_ma_previous = sum([c for c in candles[-slow_ma-1:-1]]) / slow_ma
-        slow_ma_current = sum([c for c in candles[-slow_ma:]]) / slow_ma
-
     try:
-        if fast_ma_previous < slow_ma_previous and fast_ma_current > slow_ma_current:
+        quotes = candles_to_quotes(candles)
+        fast_prev, fast_curr = get_ma_last_two(quotes, fast_ma_type, fast_ma)
+        slow_prev, slow_curr = get_ma_last_two(quotes, slow_ma_type, slow_ma)
+
+        if fast_prev < slow_prev and fast_curr > slow_curr:
             return 'call'
-        elif fast_ma_previous > slow_ma_previous and fast_ma_current < slow_ma_current:
+        elif fast_prev > slow_prev and fast_curr < slow_curr:
             return 'put'
     except Exception as e:
         log(e)
@@ -399,51 +385,12 @@ async def moving_averages_cross(candles, sstrategy=None):
 
 async def get_rsi(candles, sstrategy=None):
     period = sstrategy['rsi_period'] if sstrategy else SETTINGS['RSI_PERIOD']
-    candles = [c[2] for c in candles]
-    if len(candles) < period + 1:
+    quotes = candles_to_quotes(candles)
+    results = indicators.get_rsi(quotes, period)
+    values = [r.rsi for r in results if r.rsi is not None]
+    if not values:
         raise ValueError("Not enough data to calculate RSI.")
-
-    gains = []
-    losses = []
-
-    # Calculate initial gains and losses
-    for i in range(1, period + 1):
-        delta = candles[i] - candles[i - 1]
-        if delta > 0:
-            gains.append(delta)
-        else:
-            losses.append(abs(delta))
-
-    avg_gain = sum(gains) / period
-    avg_loss = sum(losses) / period
-
-    rsi_values = [None] * period  # Pad with None to match the length of candles
-
-    # Calculate the first RSI value
-    if avg_loss == 0:
-        rsi_values.append(100)
-    else:
-        rs = avg_gain / avg_loss
-        rsi_values.append(100 - (100 / (1 + rs)))
-
-    # Calculate subsequent RSI values
-    for i in range(period + 1, len(candles)):
-        delta = candles[i] - candles[i - 1]
-        gain = max(delta, 0)
-        loss = abs(min(delta, 0))
-
-        avg_gain = ((avg_gain * (period - 1)) + gain) / period
-        avg_loss = ((avg_loss * (period - 1)) + loss) / period
-
-        if avg_loss == 0:
-            rsi = 100
-        else:
-            rs = avg_gain / avg_loss
-            rsi = 100 - (100 / (1 + rs))
-
-        rsi_values.append(rsi)
-
-    return rsi_values
+    return values
 
 
 def get_rsi_lower(rsi_upper):
