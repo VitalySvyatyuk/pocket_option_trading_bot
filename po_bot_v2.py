@@ -41,6 +41,7 @@ FAVORITES_REANIMATED = False
 SETTINGS = {}
 MARTINGALE_LIST = []
 MARTINGALE_LAST_ACTION_ENDS_AT = datetime.now()
+LAST_CANDLE_TS = {}
 MARTINGALE_AMOUNT_SET = False
 MARTINGALE_INITIAL = True
 MARTINGALE_MAP = {
@@ -464,13 +465,7 @@ async def hand_delay():
 
 
 async def check_indicators(driver):
-    global MARTINGALE_LAST_ACTION_ENDS_AT, MARTINGALE_AMOUNT_SET, MARTINGALE_INITIAL
-
-    if SETTINGS.get('BEGINNING_CANDLE_ORDER'):
-        # check is it the beginning of the candle
-        now = datetime.now()
-        if (now.hour * 3600 + now.minute * 60 + now.second) % PERIOD != 0:
-            return  # and if it's not, return
+    global MARTINGALE_LAST_ACTION_ENDS_AT, MARTINGALE_AMOUNT_SET, MARTINGALE_INITIAL, LAST_CANDLE_TS
 
     MARTINGALE_LIST = SETTINGS.get('MARTINGALE_LIST')
     base = '#modal-root > div > div > div > div > div > div:nth-child(2) > div.panel-collapse__body > div > div > div:nth-child(%s) > div'
@@ -545,6 +540,12 @@ async def check_indicators(driver):
     action = None
     sstrategy = None
     for asset, candles in CANDLES.items():
+        if SETTINGS.get('BEGINNING_CANDLE_ORDER'):
+            current_ts = candles[-1][0] if candles else None
+            if not current_ts or current_ts == LAST_CANDLE_TS.get(asset):
+                continue
+            LAST_CANDLE_TS[asset] = current_ts
+
         if SETTINGS.get('USE_SERVER_STRATEGIES') and \
                 asset in SERVER_STRATEGIES and \
                 len(SERVER_STRATEGIES[asset]) > 0 and \
