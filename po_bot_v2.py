@@ -332,14 +332,23 @@ async def create_order(driver, action, asset, sstrategy=None):
     return True
 
 
-def candles_to_quotes(candles):
+def candles_to_quotes(candles, estimate_ohlc=False):
     base_date = datetime(2000, 1, 1)
     quotes = []
     for i, c in enumerate(candles):
         close = c[2]
         open_ = c[1] if isinstance(c[1], (int, float)) else close
-        high = c[3] if len(c) > 3 and isinstance(c[3], (int, float)) else close
-        low = c[4] if len(c) > 4 and isinstance(c[4], (int, float)) else close
+        high = c[3] if len(c) > 3 and isinstance(c[3], (int, float)) else None
+        low = c[4] if len(c) > 4 and isinstance(c[4], (int, float)) else None
+        if high is None or low is None:
+            if estimate_ohlc:
+                prev_close = candles[i - 1][2] if i > 0 else close
+                next_close = candles[i + 1][2] if i < len(candles) - 1 else close
+                high = max(close, prev_close, next_close)
+                low = min(close, prev_close, next_close)
+            else:
+                high = close
+                low = close
         quotes.append(Quote(base_date + timedelta(minutes=i), open_, high, low, close))
     return quotes
 
@@ -614,7 +623,7 @@ async def psar_strategy(candles, sstrategy=None):
 
 async def vortex_strategy(candles, sstrategy=None):
     period = sstrategy.get('vortex_period') if sstrategy else SETTINGS.get('VORTEX_PERIOD', 14)
-    quotes = candles_to_quotes(candles)
+    quotes = candles_to_quotes(candles, estimate_ohlc=True)
     results = indicators.get_vortex(quotes, period)
     valid = [r for r in results if r.pvi is not None and r.nvi is not None]
     if len(valid) < 2:
@@ -658,7 +667,7 @@ async def check_strategies(candles, sstrategy=None):
     
 
 async def get_candles_yfinance(email, asset, timeframe):
-    response = requests.get(CANDLES_URL, params={'asset': asset, 'email': email, 'timeframe': timeframe, 'size': 10000})
+    response = requests.get(CANDLES_URL, params={'asset': asset, 'email': email, 'timeframe': timeframe, 'size': 1000})
     if response.status_code != 200:
         raise Exception(response.json()['error'])
     candles = [['', '', c] for c in response.json()[asset]]  # ['', '', val] to fit into strategies where 'close' is [2]
@@ -684,7 +693,18 @@ async def backtest(email, timeframe='1m'):  # 1m, 2m, 3m, 5m, 10m, 15m, 30m, 60m
             log(f'Backtest on {asset} with {timeframe}min timeframe! No candles available, try later.')
             continue
 
-        size = max(SETTINGS['SLOW_MA'], SETTINGS['RSI_PERIOD']) + 11
+        strategy = SETTINGS.get('STRATEGY', 1)
+        if strategy == 3:
+            size = SETTINGS.get('VORTEX_PERIOD', 14)
+        elif strategy == 2:
+            size = 50  # PSAR needs enough warmup candles
+        else:
+            size = SETTINGS.get('SLOW_MA', 8)
+        if SETTINGS.get('RSI_ENABLED'):
+            size = max(size, SETTINGS.get('RSI_PERIOD', 14))
+        if SETTINGS.get('SUPERTREND_ENABLED'):
+            size = max(size, SETTINGS.get('SUPERTREND_PERIOD', 10))
+        size += 11
         actions = {}
         for i in range(size, len(candles) + 1):
             candles_part = candles[i-size:i+1]
@@ -693,7 +713,7 @@ async def backtest(email, timeframe='1m'):  # 1m, 2m, 3m, 5m, 10m, 15m, 30m, 60m
                 if SETTINGS['VICE_VERSA']:
                     action = 'call' if action == 'put' else 'put'
                 actions[i] = action
-        # print('Actions:', len(actions))
+        print('Actions:', len(actions))
         try:
             per = int(len(candles) / len(actions))
         except ZeroDivisionError:
