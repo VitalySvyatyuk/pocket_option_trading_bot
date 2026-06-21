@@ -415,6 +415,20 @@ async def rsi_strategy(candles, action, sstrategy=None):
     return None
 
 
+async def supertrend_strategy(candles, action, sstrategy=None):
+    period = sstrategy.get('supertrend_period') if sstrategy else SETTINGS.get('SUPERTREND_PERIOD', 10)
+    quotes = candles_to_quotes(candles)
+    results = indicators.get_super_trend(quotes, period)
+    last = next((r for r in reversed(results) if r.upper_band is not None or r.lower_band is not None), None)
+    if last is None:
+        return None
+    if action == 'call' and last.lower_band is not None:
+        return 'call'
+    elif action == 'put' and last.upper_band is not None:
+        return 'put'
+    return None
+
+
 async def get_price_action(candles, action):
     if action == 'call':
         if candles[-1][2] > candles[-3][2]:
@@ -594,6 +608,12 @@ async def check_strategies(candles, sstrategy=None):
         if not action:
             return
 
+    supertrend_enabled = True if sstrategy else SETTINGS.get('SUPERTREND_ENABLED')
+    if supertrend_enabled:
+        action = await supertrend_strategy(candles, action, sstrategy=sstrategy)
+        if not action:
+            return
+
     # action = await get_price_action(candles, action)
     # if not action:
     #     return  # secret ingredient
@@ -738,12 +758,16 @@ def tkinter_run():
     global window
     window = Tk()
     window.geometry('550x300')
-    window.title('Pocket Option Trading Bot v2.16')
+    window.title('Pocket Option Trading Bot v2.17')
     read_settings()
 
     def enable_rsi():
         for el in [ent_rsi_period, lbl_rsi_period, lbl_rsi_call, lbl_rsi_put, rsi_upper_drop, ent_rsi_upper]:
             el.config(state='normal' if chk_rsi_var.get() else 'disabled')
+
+    def enable_supertrend():
+        for el in [lbl_supertrend_period, ent_supertrend_period]:
+            el.config(state='normal' if chk_supertrend_var.get() else 'disabled')
 
     def enable_take_profit():
         ent_take_profit.config(state='normal' if chk_take_prof.get() else 'disabled')
@@ -826,6 +850,20 @@ def tkinter_run():
     rsi_lower_val = IntVar(value=get_rsi_lower(int(SETTINGS.get('RSI_UPPER', 70))))
     ent_rsi_lower = Entry(window, width=2, justify='right', textvariable=rsi_lower_val, state='disabled')
     ent_rsi_lower.grid(column=0, row=8, sticky=E)
+
+    chk_supertrend_var = IntVar()
+    chk_supertrend = Checkbutton(window, text='Supertrend', variable=chk_supertrend_var, justify='left', anchor='w',
+                                 command=enable_supertrend)
+    if SETTINGS.get('SUPERTREND_ENABLED', False) is True:
+        chk_supertrend.select()
+    chk_supertrend.grid(column=0, row=9, sticky=W)
+    lbl_supertrend_period = Label(window, text='Period', justify='left')
+    lbl_supertrend_period.config(state='normal' if chk_supertrend_var.get() else 'disabled')
+    lbl_supertrend_period.grid(column=0, row=10, sticky=W)
+    supertrend_period_val = IntVar(value=SETTINGS.get('SUPERTREND_PERIOD', 10))
+    ent_supertrend_period = Entry(window, width=2, justify='right', textvariable=supertrend_period_val)
+    ent_supertrend_period.config(state='normal' if chk_supertrend_var.get() else 'disabled')
+    ent_supertrend_period.grid(column=0, row=10, sticky=E)
 
     Label(window, text='   ').grid(column=1, row=0)  # DIVIDER
 
@@ -955,6 +993,9 @@ def tkinter_run():
         if chk_stop_lo.get() and not validate_int(ent_stop_loss.get(), 1, 20000):
             error_variable.set('Stop loss: should be number 1-20000')
             return
+        if chk_supertrend_var.get() and not validate_int(ent_supertrend_period.get(), 1, 99):
+            error_variable.set('Supertrend period: should be number 1-99')
+            return
         if not validate_int(ent_chrome_version.get(), 80, 999):
             error_variable.set('Chrome version: should be number 80-999')
             return
@@ -979,6 +1020,8 @@ def tkinter_run():
             STOP_LOSS=stop_loss_val.get() if chk_stop_lo.get() else SETTINGS.get('STOP_LOSS', 50),
             USE_SERVER_STRATEGIES=True if chk_serv.get() else False,
             BEGINNING_CANDLE_ORDER=True if chk_begin.get() else False,
+            SUPERTREND_ENABLED=True if chk_supertrend_var.get() else False,
+            SUPERTREND_PERIOD=supertrend_period_val.get() if chk_supertrend_var.get() else SETTINGS.get('SUPERTREND_PERIOD', 10),
             CHROME_VERSION=int(ent_chrome_version.get()),
         )
         window.destroy()
