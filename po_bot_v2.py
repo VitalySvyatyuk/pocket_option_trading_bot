@@ -920,22 +920,22 @@ def tkinter_run():
     backtest_option.grid(column=2, row=7, sticky=E)
 
 
-    chk_serv = IntVar()  # server strategies
-    chk_server = Checkbutton(window, text='Use server strategies', variable=chk_serv, justify='left', anchor='w')
-    if SETTINGS.get('USE_SERVER_STRATEGIES', False) is True:
-        chk_server.select()
-    chk_server.grid(column=2, row=8, sticky=W)
+    # chk_serv = IntVar()  # server strategies
+    # chk_server = Checkbutton(window, text='Use server strategies', variable=chk_serv, justify='left', anchor='w')
+    # if SETTINGS.get('USE_SERVER_STRATEGIES', False) is True:
+    #     chk_server.select()
+    # chk_server.grid(column=2, row=8, sticky=W)
 
     chk_begin = IntVar()  # beginning of the candle order
     chk_beginning = Checkbutton(window, text='Beginning candle order', variable=chk_begin, justify='left', anchor='w')
     if SETTINGS.get('BEGINNING_CANDLE_ORDER', False) is True:
         chk_beginning.select()
-    chk_beginning.grid(column=2, row=9, sticky=W)
+    chk_beginning.grid(column=2, row=8, sticky=W)
 
-    Label(window, text='Chrome version', justify='left').grid(column=2, row=10, sticky=W)
+    Label(window, text='Chrome version', justify='left').grid(column=2, row=9, sticky=W)
     chrome_version_val = IntVar(value=SETTINGS.get('CHROME_VERSION', 148))
     ent_chrome_version = Entry(window, width=4, justify='right', textvariable=chrome_version_val)
-    ent_chrome_version.grid(column=2, row=10, sticky=E)
+    ent_chrome_version.grid(column=2, row=9, sticky=E)
 
     Label(window, text='   ').grid(column=3, row=0)  # DIVIDER
 
