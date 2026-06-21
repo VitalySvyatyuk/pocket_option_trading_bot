@@ -108,7 +108,7 @@ async def get_driver():
     else:
         path_default = ''
     options.add_argument(fr'--user-data-dir={path_default}')
-    driver = uc.Chrome(options=options, version_main=148)
+    driver = uc.Chrome(options=options, version_main=SETTINGS.get('CHROME_VERSION', 148))
     return driver
 
 
@@ -737,7 +737,7 @@ def save_settings(**kwargs):
 def tkinter_run():
     global window
     window = Tk()
-    window.geometry('550x270')
+    window.geometry('550x300')
     window.title('Pocket Option Trading Bot v2.16')
     read_settings()
 
@@ -893,6 +893,11 @@ def tkinter_run():
         chk_beginning.select()
     chk_beginning.grid(column=2, row=9, sticky=W)
 
+    Label(window, text='Chrome version', justify='left').grid(column=2, row=10, sticky=W)
+    chrome_version_val = IntVar(value=SETTINGS.get('CHROME_VERSION', 148))
+    ent_chrome_version = Entry(window, width=4, justify='right', textvariable=chrome_version_val)
+    ent_chrome_version.grid(column=2, row=10, sticky=E)
+
     Label(window, text='   ').grid(column=3, row=0)  # DIVIDER
 
     Label(window, text='Martingale').grid(column=4, row=0)
@@ -950,6 +955,9 @@ def tkinter_run():
         if chk_stop_lo.get() and not validate_int(ent_stop_loss.get(), 1, 20000):
             error_variable.set('Stop loss: should be number 1-20000')
             return
+        if not validate_int(ent_chrome_version.get(), 80, 999):
+            error_variable.set('Chrome version: should be number 80-999')
+            return
         save_settings(
             FAST_MA=int(ent_fast_ma.get()),
             FAST_MA_TYPE=fast_ma_type.get(),
@@ -971,6 +979,7 @@ def tkinter_run():
             STOP_LOSS=stop_loss_val.get() if chk_stop_lo.get() else SETTINGS.get('STOP_LOSS', 50),
             USE_SERVER_STRATEGIES=True if chk_serv.get() else False,
             BEGINNING_CANDLE_ORDER=True if chk_begin.get() else False,
+            CHROME_VERSION=int(ent_chrome_version.get()),
         )
         window.destroy()
         return
@@ -982,8 +991,8 @@ def tkinter_run():
     error_variable = StringVar()
     lbl_error = Label(window, textvariable=error_variable, justify='left', anchor='w', fg='#f00')
     lbl_error.grid(column=0, columnspan=4, row=19, sticky=W)
-    btn = Button(window, text="C'mon bot, make me rich", command=run)
-    btn.grid(column=0, row=20)
+    btn = Button(window, text="Run", command=run)
+    btn.grid(column=4, row=20, sticky=E)
 
     window.protocol("WM_DELETE_WINDOW", on_close)
     window.mainloop()
