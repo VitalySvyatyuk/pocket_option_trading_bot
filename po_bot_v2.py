@@ -647,9 +647,26 @@ async def marubozu_strategy(candles, sstrategy=None):
     return None
 
 
+async def cci_strategy(candles, sstrategy=None):
+    period = sstrategy.get('cci_period') if sstrategy else SETTINGS.get('CCI_PERIOD', 20)
+    quotes = candles_to_quotes(candles, estimate_ohlc=True)
+    results = indicators.get_cci(quotes, lookback_periods=period)
+    valid = [r for r in results if r.cci is not None]
+    if len(valid) < 2:
+        return None
+    prev, curr = valid[-2], valid[-1]
+    if prev.cci <= 100 and curr.cci > 100:
+        return 'call'
+    elif prev.cci >= -100 and curr.cci < -100:
+        return 'put'
+    return None
+
+
 async def check_strategies(candles, sstrategy=None):
     strategy = sstrategy.get('strategy', 1) if sstrategy else SETTINGS.get('STRATEGY', 1)
-    if strategy == 4:
+    if strategy == 5:
+        action = await cci_strategy(candles, sstrategy=sstrategy)
+    elif strategy == 4:
         action = await marubozu_strategy(candles, sstrategy=sstrategy)
     elif strategy == 3:
         action = await vortex_strategy(candles, sstrategy=sstrategy)
@@ -707,7 +724,9 @@ async def backtest(email, timeframe='1m'):  # 1m, 2m, 3m, 5m, 10m, 15m, 30m, 60m
             continue
 
         strategy = SETTINGS.get('STRATEGY', 1)
-        if strategy == 4:
+        if strategy == 5:
+            size = SETTINGS.get('CCI_PERIOD', 20)
+        elif strategy == 4:
             size = 5
         elif strategy == 3:
             size = SETTINGS.get('VORTEX_PERIOD', 14)
@@ -828,7 +847,7 @@ def save_settings(**kwargs):
 def tkinter_run():
     global window
     window = Tk()
-    window.geometry('560x380')
+    window.geometry('560x410')
     window.title('Pocket Option Trading Bot v2.17')
     read_settings()
 
@@ -900,57 +919,64 @@ def tkinter_run():
     ent_marubozu_min_body = Entry(window, width=2, justify='right', textvariable=marubozu_min_body_val)
     ent_marubozu_min_body.grid(column=0, row=8, sticky=E)
 
+    Radiobutton(window, text='CCI', variable=radio_var, value=5, justify='left', anchor='w').grid(
+        column=0, row=9, sticky=W)
+    Label(window, text='Period').grid(column=0, row=9)
+    cci_period_val = IntVar(value=SETTINGS.get('CCI_PERIOD', 20))
+    ent_cci_period = Entry(window, width=2, justify='right', textvariable=cci_period_val)
+    ent_cci_period.grid(column=0, row=9, sticky=E)
+
     chk_rsi_var = IntVar()
     chk_rsi = Checkbutton(window, text='RSI', variable=chk_rsi_var, justify='left', anchor='w', command=enable_rsi)
     if SETTINGS.get('RSI_ENABLED', False) is True:
         chk_rsi.select()
-    chk_rsi.grid(column=0, row=9, sticky=W)
+    chk_rsi.grid(column=0, row=10, sticky=W)
     rsi_period_val = IntVar(value=SETTINGS.get('RSI_PERIOD', 14))
     ent_rsi_period = Entry(window, width=2, justify='right', textvariable=rsi_period_val)
     ent_rsi_period.config(state='normal' if chk_rsi_var.get() else 'disabled')
-    ent_rsi_period.grid(column=0, row=9, sticky=E)
+    ent_rsi_period.grid(column=0, row=10, sticky=E)
     lbl_rsi_period = Label(window, text='period')
     lbl_rsi_period.config(state='normal' if chk_rsi_var.get() else 'disabled')
-    lbl_rsi_period.grid(column=0, row=9)
+    lbl_rsi_period.grid(column=0, row=10)
     lbl_rsi_call = Label(window, text='Call if RSI', justify='left')
     lbl_rsi_call.config(state='normal' if chk_rsi_var.get() else 'disabled')
-    lbl_rsi_call.grid(column=0, row=10, sticky=W)
+    lbl_rsi_call.grid(column=0, row=11, sticky=W)
     rsi_upper_sign = StringVar(window)
     rsi_upper_sign.set(SETTINGS.get('RSI_CALL_SIGN', '>'))
     rsi_upper_drop = OptionMenu(window, rsi_upper_sign, '>', '<')
     rsi_upper_drop.config(state='normal' if chk_rsi_var.get() else 'disabled', disabledforeground='black')
-    rsi_upper_drop.grid(column=0, row=10)
+    rsi_upper_drop.grid(column=0, row=11)
     rsi_upper_sign.trace_add('write', set_rsi_lower_sign)
     rsi_upper_val = IntVar(value=SETTINGS.get('RSI_UPPER', 70))
     ent_rsi_upper = Entry(window, width=2, justify='right', textvariable=rsi_upper_val)
     ent_rsi_upper.config(state='normal' if chk_rsi_var.get() else 'disabled')
-    ent_rsi_upper.grid(column=0, row=10, sticky=E)
+    ent_rsi_upper.grid(column=0, row=11, sticky=E)
     rsi_upper_val.trace_add('write', set_rsi_lower)
     lbl_rsi_put = Label(window, text='Put if RSI', justify='left')
     lbl_rsi_put.config(state='normal' if chk_rsi_var.get() else 'disabled')
-    lbl_rsi_put.grid(column=0, row=11, sticky=W)
+    lbl_rsi_put.grid(column=0, row=12, sticky=W)
     rsi_lower_sign = StringVar(window)
     rsi_lower_sign.set(get_rsi_put_sign(SETTINGS.get('RSI_CALL_SIGN', '>')))
     rsi_lower_drop = OptionMenu(window, rsi_lower_sign, '>', '<')
     rsi_lower_drop.config(state='disabled', disabledforeground='black')
-    rsi_lower_drop.grid(column=0, row=11)
+    rsi_lower_drop.grid(column=0, row=12)
     rsi_lower_val = IntVar(value=get_rsi_lower(int(SETTINGS.get('RSI_UPPER', 70))))
     ent_rsi_lower = Entry(window, width=2, justify='right', textvariable=rsi_lower_val, state='disabled')
-    ent_rsi_lower.grid(column=0, row=11, sticky=E)
+    ent_rsi_lower.grid(column=0, row=12, sticky=E)
 
     chk_supertrend_var = IntVar()
     chk_supertrend = Checkbutton(window, text='Supertrend', variable=chk_supertrend_var, justify='left', anchor='w',
                                  command=enable_supertrend)
     if SETTINGS.get('SUPERTREND_ENABLED', False) is True:
         chk_supertrend.select()
-    chk_supertrend.grid(column=0, row=12, sticky=W)
+    chk_supertrend.grid(column=0, row=13, sticky=W)
     lbl_supertrend_period = Label(window, text='Period', justify='left')
     lbl_supertrend_period.config(state='normal' if chk_supertrend_var.get() else 'disabled')
-    lbl_supertrend_period.grid(column=0, row=13, sticky=W)
+    lbl_supertrend_period.grid(column=0, row=14, sticky=W)
     supertrend_period_val = IntVar(value=SETTINGS.get('SUPERTREND_PERIOD', 10))
     ent_supertrend_period = Entry(window, width=2, justify='right', textvariable=supertrend_period_val)
     ent_supertrend_period.config(state='normal' if chk_supertrend_var.get() else 'disabled')
-    ent_supertrend_period.grid(column=0, row=13, sticky=E)
+    ent_supertrend_period.grid(column=0, row=14, sticky=E)
 
     Label(window, text='   ').grid(column=1, row=0)  # DIVIDER
 
@@ -1086,6 +1112,9 @@ def tkinter_run():
         if not validate_int(ent_marubozu_min_body.get(), 1, 99):
             error_variable.set('Marubozu min body: should be number 1-99')
             return
+        if not validate_int(ent_cci_period.get(), 2, 99):
+            error_variable.set('CCI period: should be number 2-99')
+            return
         if chk_supertrend_var.get() and not validate_int(ent_supertrend_period.get(), 1, 99):
             error_variable.set('Supertrend period: should be number 1-99')
             return
@@ -1096,6 +1125,7 @@ def tkinter_run():
             STRATEGY=radio_var.get(),
             VORTEX_PERIOD=int(ent_vortex_period.get()),
             MARUBOZU_MIN_BODY=int(ent_marubozu_min_body.get()),
+            CCI_PERIOD=int(ent_cci_period.get()),
             FAST_MA=int(ent_fast_ma.get()),
             FAST_MA_TYPE=fast_ma_type.get(),
             SLOW_MA=int(ent_slow_ma.get()),
