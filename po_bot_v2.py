@@ -867,7 +867,7 @@ def tkinter_run():
     global window
     window = Tk()
     window.geometry('560x440')
-    window.title('Pocket Option Trading Bot v2.17')
+    window.title('Pocket Option Trading Bot v2.18')
     read_settings()
 
     def enable_rsi():
