@@ -114,7 +114,7 @@ async def get_driver():
 
 
 async def get_email(driver):
-    info_email = driver.find_element(By.CLASS_NAME, 'info__email')
+    info_email = driver.find_element(By.CLASS_NAME, 'profile-menu__user-email')
     email = info_email.find_element(By.TAG_NAME, 'div').get_attribute('data-hd-show')
     if '@' not in email:
         return None
